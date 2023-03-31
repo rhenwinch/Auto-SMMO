@@ -10,7 +10,6 @@ import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
-import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -20,7 +19,7 @@ import com.xcape.simplemmomod.ui.theme.SimpleMMOModTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AutoTravelErrorDialog(
+fun AutoTravelDialog(
     errorMessage: String,
     onConsumeError: () -> Unit
 ) {
@@ -85,6 +84,6 @@ fun AutoTravelErrorDialog(
 @Composable
 fun PreviewAlertDialog() {
     SimpleMMOModTheme {
-        AutoTravelErrorDialog("Error", {})
+        AutoTravelDialog("Error", {})
     }
 }

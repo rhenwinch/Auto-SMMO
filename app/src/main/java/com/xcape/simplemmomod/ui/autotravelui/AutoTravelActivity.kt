@@ -29,6 +29,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
+import com.google.accompanist.permissions.ExperimentalPermissionsApi
+import com.google.accompanist.permissions.isGranted
+import com.google.accompanist.permissions.rememberPermissionState
+import com.google.accompanist.permissions.shouldShowRationale
 import com.xcape.simplemmomod.R
 import com.xcape.simplemmomod.common.Functions.isUserWayPastDailyResetTime
 import com.xcape.simplemmomod.common.SkillType
@@ -69,6 +73,7 @@ class AutoTravelActivity: ComponentActivity() {
     }
 }
 
+@OptIn(ExperimentalPermissionsApi::class)
 @Composable
 fun AutoTravelUi(
     activityKiller: () -> Unit,
@@ -77,15 +82,6 @@ fun AutoTravelUi(
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
 
-    val serviceIntent = Intent(context, TravellerForegroundService::class.java)
-
-    val screenState by viewModel.state.collectAsState(initial = AutoTravelUiState())
-    val user by viewModel.user.collectAsState(initial = User())
-
-    val snackbarHostState = remember { SnackbarHostState() }
-
-    val (selectedOption, onOptionSelected) = remember { mutableStateOf(screenState.skillToUpgrade) }
-
     fun Context.startTravellerService(intent: Intent) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             startForegroundService(intent)
@@ -93,6 +89,39 @@ fun AutoTravelUi(
             startService(intent)
         }
     }
+
+    val serviceIntent = Intent(context, TravellerForegroundService::class.java)
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+        val notificationsPermissionState = rememberPermissionState(
+            android.Manifest.permission.POST_NOTIFICATIONS
+        )
+
+        val textToShow = if (notificationsPermissionState.status.shouldShowRationale) {
+            "It seems that you've blocked notification permissions. Please grant this permission."
+        } else {
+            "Notification permission is required for this feature to be available. Please grant this permission."
+        }
+
+        if(!notificationsPermissionState.status.isGranted) {
+            AutoTravelDialog(errorMessage = textToShow) {
+                notificationsPermissionState.launchPermissionRequest()
+            }
+
+            if(notificationsPermissionState.status.isGranted) {
+                serviceIntent.also {
+                    it.action = ACTION_STOP_TRAVELLING
+                    context.startTravellerService(it)
+                }
+            }
+        }
+    }
+
+    val screenState by viewModel.state.collectAsState(initial = AutoTravelUiState())
+    val user by viewModel.user.collectAsState(initial = User())
+
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    val (selectedOption, onOptionSelected) = remember { mutableStateOf(screenState.skillToUpgrade) }
 
     LaunchedEffect(screenState.isServiceRunning) {
         if(!screenState.isServiceRunning)
@@ -124,7 +153,7 @@ fun AutoTravelUi(
                                     snackbarHostState.showSnackbar(
                                         message = "Dailies have been reset!",
                                         withDismissAction = true,
-                                        duration = SnackbarDuration.Long
+                                        duration = SnackbarDuration.Short
                                     )
                                 }
                             }
@@ -147,7 +176,7 @@ fun AutoTravelUi(
         snackbarHost = { SnackbarHost(hostState = snackbarHostState) }
     ) { scaffoldPadding ->
         if(screenState.errors.isNotEmpty()) {
-            AutoTravelErrorDialog(
+            AutoTravelDialog(
                 errorMessage = screenState.errors,
                 onConsumeError = {
                     serviceIntent.also {
