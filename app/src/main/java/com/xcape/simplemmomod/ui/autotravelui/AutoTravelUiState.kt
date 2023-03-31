@@ -11,7 +11,11 @@ sealed class TravellingStatus {
     object Battling: TravellingStatus()
     object Stepping: TravellingStatus()
     object Questing: TravellingStatus()
-    data class UpgradeSkill(val skillType: SkillType): TravellingStatus()
+    data class UpgradeSkill(val skillType: SkillType): TravellingStatus() {
+        override fun toString(): String {
+            return "Upgrading ${skillType.toString().uppercase()}"
+        }
+    }
 
     override fun toString(): String {
         return when(this) {

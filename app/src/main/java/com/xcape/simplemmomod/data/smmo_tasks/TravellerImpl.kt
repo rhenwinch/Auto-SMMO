@@ -1,8 +1,5 @@
 package com.xcape.simplemmomod.data.smmo_tasks
 
-import android.util.Log
-import com.xcape.simplemmomod.common.*
-import com.xcape.simplemmomod.common.Constants.APP_TAG
 import com.xcape.simplemmomod.common.Endpoints.API_HOST
 import com.xcape.simplemmomod.common.Endpoints.BASE_URL
 import com.xcape.simplemmomod.common.Endpoints.STEP_URL
@@ -10,11 +7,6 @@ import com.xcape.simplemmomod.common.Endpoints.TRAVEL_URL
 import com.xcape.simplemmomod.common.Endpoints.UPGRADE_SKILL_URL
 import com.xcape.simplemmomod.common.Functions.getTimeInMilliseconds
 import com.xcape.simplemmomod.common.Functions.toJson
-import com.xcape.simplemmomod.data.dto.UpgradeSkillDto
-import com.xcape.simplemmomod.data.dto.toUpgradeResponse
-import com.xcape.simplemmomod.domain.model.StepResult
-import com.xcape.simplemmomod.data.remote.AutoSMMORequest
-import com.xcape.simplemmomod.data.remote.JSON_BODY_TYPE
 import com.xcape.simplemmomod.common.Parser.isUserDead
 import com.xcape.simplemmomod.common.Parser.isUserNotVerified
 import com.xcape.simplemmomod.common.Parser.isUserOnAJob
@@ -23,7 +15,14 @@ import com.xcape.simplemmomod.common.Parser.parseItemLoot
 import com.xcape.simplemmomod.common.Parser.parseMaterialLoot
 import com.xcape.simplemmomod.common.Parser.parseNpcFound
 import com.xcape.simplemmomod.common.Parser.shouldWaitMore
+import com.xcape.simplemmomod.common.SkillType
+import com.xcape.simplemmomod.common.StepType
 import com.xcape.simplemmomod.common.StepType.Companion.toStepType
+import com.xcape.simplemmomod.data.dto.UpgradeSkillDto
+import com.xcape.simplemmomod.data.dto.toUpgradeResponse
+import com.xcape.simplemmomod.data.remote.AutoSMMORequest
+import com.xcape.simplemmomod.data.remote.JSON_BODY_TYPE
+import com.xcape.simplemmomod.domain.model.StepResult
 import com.xcape.simplemmomod.domain.repository.UserApiServiceRepository
 import com.xcape.simplemmomod.domain.repository.UserRepository
 import com.xcape.simplemmomod.domain.smmo_tasks.*
@@ -141,6 +140,15 @@ class TravellerImpl @Inject constructor(
             )
         }
 
+        user = user.copy(
+            cookie = newCookie,
+            level = currentLevel,
+            gold = currentGold,
+            dailySteps = user.dailySteps + 1,
+            totalSteps = user.totalSteps + 1
+        )
+        userRepository.updateUser(user = user)
+
         val goldEarned = stepResult.gold_amount
         val expEarned = stepResult.exp_amount
 
@@ -149,8 +157,8 @@ class TravellerImpl @Inject constructor(
             StepType.MATERIAL -> {
                 val (materialLevelAndRarity, materialId) = parseMaterialLoot(toParse = travelText)
 
-                user = autoSMMOLogger.log(
-                    message = "[STEP #${user.level}] You've found (Material): $travelHeadline [$materialLevelAndRarity]",
+                autoSMMOLogger.log(
+                    message = "[STEP #${user.dailySteps}] You've found (Material): $travelHeadline [$materialLevelAndRarity]",
                     user = user
                 )
 
@@ -160,7 +168,7 @@ class TravellerImpl @Inject constructor(
                 }
             }
             StepType.TEXT -> {
-                user = autoSMMOLogger.log(
+                autoSMMOLogger.log(
                     message = "[STEP #${user.dailySteps}] $travelHeadline",
                     user = user
                 )
@@ -200,7 +208,7 @@ class TravellerImpl @Inject constructor(
             StepType.NPC -> {
                 val (npcLevel, npcId) = parseNpcFound(toParse = travelText)
 
-                user = autoSMMOLogger.log(
+                autoSMMOLogger.log(
                     message = "[STEP #${user.dailySteps}] You've found (NPC): $travelHeadline ($npcLevel)",
                     user = user
                 )
@@ -213,7 +221,7 @@ class TravellerImpl @Inject constructor(
                     )
             }
             StepType.PLAYER -> {
-                user = autoSMMOLogger.log(
+                autoSMMOLogger.log(
                     message = "[STEP #${user.dailySteps}] You've encountered (Player): $travelHeadline",
                     user = user
                 )
@@ -221,23 +229,11 @@ class TravellerImpl @Inject constructor(
         }
 
 
-        user = autoSMMOLogger.log(
-            message = "> Step Rewards [gold/exp]: $goldEarned/$expEarned | Current [gold/exp/level]: $currentGold/$currentExp/$currentLevel",
-            user = user
-        )
+        autoSMMOLogger.log(message = "> Step Rewards [gold/exp]: $goldEarned/$expEarned | Current [gold/exp/level]: $currentGold/$currentExp/$currentLevel")
 
-        val newUser = userRepository.getLoggedInUser()!!.copy(
-            cookie = newCookie,
-            level = currentLevel,
-            gold = currentGold,
-            dailySteps = user.dailySteps + 1,
-            totalSteps = user.totalSteps + 1
-        )
-        userRepository.updateUser(user = newUser)
-
-        val shouldHumanizeStepping = user.dailySteps % Random.nextInt(8, 16) == 0
+        val shouldHumanizeStepping = user.dailySteps % (8..16).random() == 0
         if(shouldHumanizeStepping)
-            waitTime += Random.nextLong(1000, 3000)
+            waitTime += (1000L..3000L).random()
 
         return waitTime
     }
@@ -263,7 +259,7 @@ class TravellerImpl @Inject constructor(
 
         var isUserOutOfEnergy = userWithEnergy.questEnergy == 0
         if(isUserOutOfEnergy) {
-            return Random.nextLong(800, 1500)
+            return (800L..1500L).random()
         }
 
         user = autoSMMOLogger.log(
@@ -308,12 +304,12 @@ class TravellerImpl @Inject constructor(
             userRepository.updateUser(user = user)
 
             questEnergy = questResponse.questPoints!!
-            delay(Random.nextLong(2000, 3500))
+            delay((1500L..2500L).random())
         }
 
         userRepository.updateUser(user = user)
 
-        return Random.nextLong(800, 1500)
+        return (800L..1500L).random()
     }
 
     override suspend fun doArena(
@@ -321,7 +317,7 @@ class TravellerImpl @Inject constructor(
         shouldSkipNPCs: Boolean
     ): Long {
         if(shouldSkipNPCs)
-            return Random.nextLong(800, 1500)
+            return (800L..1500L).random()
 
         var user = userRepository.getLoggedInUser()!!
         val userWithEnergy = userApiServiceRepository.getUser(
@@ -343,7 +339,7 @@ class TravellerImpl @Inject constructor(
 
         val isUserOutOfEnergy = userWithEnergy.questEnergy == 0
         if(isUserOutOfEnergy) {
-            return Random.nextLong(800, 1500)
+            return (800L..1500L).random()
         }
 
         user = autoSMMOLogger.log(
@@ -355,7 +351,7 @@ class TravellerImpl @Inject constructor(
         while (battleEnergy > 0) {
             val npc = arenaActions.generateNpc()
             if(npc.result == "You do not have enough energy to do this.") {
-                return Random.nextLong(800, 1500)
+                return (800L..1500L).random()
             }
 
             user = autoSMMOLogger.log(
@@ -369,10 +365,10 @@ class TravellerImpl @Inject constructor(
                 isUserTravelling = false
             )
             battleEnergy -= 1
-            delay(Random.nextLong(2000, 3500))
+            delay((1500L..3000L).random())
         }
 
-        return Random.nextLong(800, 1500)
+        return (800L..1500L).random()
     }
 
     override suspend fun upgradeSkill(skillToUpgrade: SkillType): Long {
@@ -397,7 +393,7 @@ class TravellerImpl @Inject constructor(
         val remainingSkillPoints = userWithEnergy.characterUpgrades
         val noUpgradesAvailable = remainingSkillPoints == 0
         if(noUpgradesAvailable) {
-            return Random.nextLong(800, 1500)
+            return (800L..1500L).random()
         }
 
         user = autoSMMOLogger.log(
@@ -423,7 +419,7 @@ class TravellerImpl @Inject constructor(
                 user = user.copy(cookie = cookie)
             )
 
-            return Random.nextLong(800, 1500)
+            return (800L..1500L).random()
         }
 
         throw Exception("Cannot upgrade skill ${skillToUpgrade.toString()
@@ -431,6 +427,6 @@ class TravellerImpl @Inject constructor(
     }
 
     override fun resetEnergyTimer() {
-        energyTimer = getTimeInMilliseconds() + Random.nextLong(300000, 1050000)
+        energyTimer = getTimeInMilliseconds() + (300000L..1050000L).random()
     }
 }

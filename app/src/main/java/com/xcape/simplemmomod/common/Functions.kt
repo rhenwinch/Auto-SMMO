@@ -1,6 +1,5 @@
 package com.xcape.simplemmomod.common
 
-import androidx.core.text.HtmlCompat
 import com.google.gson.Gson
 
 object Functions {
@@ -13,7 +12,8 @@ object Functions {
     }
 
     fun removeHtmlTags(rawHtml: String): String {
-        return HtmlCompat.fromHtml(rawHtml, HtmlCompat.FROM_HTML_MODE_LEGACY).toString()
+        val regexHtml = Regex("<.*?>")
+        return rawHtml.replace(regexHtml, "")
     }
 
     fun getTimeInMilliseconds(): Long {

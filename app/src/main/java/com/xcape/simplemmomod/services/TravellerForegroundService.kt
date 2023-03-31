@@ -13,14 +13,12 @@ import android.media.AudioAttributes
 import android.net.Uri
 import android.os.Build
 import android.provider.Settings
-import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.compose.ui.graphics.toArgb
 import androidx.core.app.NotificationCompat
 import androidx.lifecycle.LifecycleService
 import androidx.lifecycle.lifecycleScope
 import com.xcape.simplemmomod.R
-import com.xcape.simplemmomod.common.Constants.APP_TAG
 import com.xcape.simplemmomod.common.Endpoints.BOT_VERIFICATION_URL
 import com.xcape.simplemmomod.common.Functions
 import com.xcape.simplemmomod.common.OnTravellerStateChange
@@ -171,11 +169,17 @@ class TravellerForegroundService : LifecycleService(), OnTravellerStateChange {
             }
             else -> throw IllegalStateException("Invalid action given!")
         }
+
+        lifecycleScope.launch {
+            if (toLog != null) {
+                autoSMMOLogger.log(message = toLog)
+            }
+        }
     }
 
     override fun start() {
         state.update {
-            it.copy(isTravelling = true, )
+            it.copy(isTravelling = true)
         }
 
         travellerJob()

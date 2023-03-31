@@ -1,13 +1,10 @@
 package com.xcape.simplemmomod.data.smmo_tasks
 
-import android.util.Log
-import com.xcape.simplemmomod.common.Constants.APP_TAG
 import com.xcape.simplemmomod.common.Endpoints.API_HOST
 import com.xcape.simplemmomod.common.Endpoints.ATTACK_NPC_URL
 import com.xcape.simplemmomod.common.Endpoints.BASE_URL
 import com.xcape.simplemmomod.common.Endpoints.BATTLE_URL
 import com.xcape.simplemmomod.common.Endpoints.GENERATE_NPC_URL
-import com.xcape.simplemmomod.common.Functions
 import com.xcape.simplemmomod.common.Functions.getStringInBetween
 import com.xcape.simplemmomod.common.Functions.toJson
 import com.xcape.simplemmomod.common.Parser.parseItemLoot
@@ -26,7 +23,6 @@ import kotlinx.coroutines.delay
 import okhttp3.FormBody
 import okhttp3.Headers
 import javax.inject.Inject
-import kotlin.random.Random
 
 class CannotGenerateNpc(override val message: String = "Unknown error generating npc"): Exception(message)
 class CannotAttackNpc(override val message: String = "Unknown error attacking npc"): Exception(message)
@@ -175,13 +171,13 @@ class ArenaActionsImpl @Inject constructor(
                     }
                 }
 
-                delay(Random.nextLong(1000, 3000))
+                delay((1000L..2500L).random())
             }
             catch (e: Exception) {
                 throw CannotAttackNpc(message = "Could not attack NPC: ${e.localizedMessage}")
             }
         }
 
-        return Random.nextLong(1000, 3000)
+        return (1000L..2500L).random()
     }
 }

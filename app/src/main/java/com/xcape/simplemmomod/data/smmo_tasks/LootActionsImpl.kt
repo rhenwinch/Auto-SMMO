@@ -1,8 +1,6 @@
 package com.xcape.simplemmomod.data.smmo_tasks
 
 import android.util.Base64
-import android.util.Log
-import com.xcape.simplemmomod.common.Constants.APP_TAG
 import com.xcape.simplemmomod.common.Endpoints.BASE_URL
 import com.xcape.simplemmomod.common.Endpoints.GATHER_MATERIAL_URL
 import com.xcape.simplemmomod.common.Endpoints.ITEM_EQUIP_URL
@@ -12,7 +10,10 @@ import com.xcape.simplemmomod.common.Endpoints.WEB_HOST
 import com.xcape.simplemmomod.common.Functions.getStringInBetween
 import com.xcape.simplemmomod.common.Functions.toJson
 import com.xcape.simplemmomod.common.RarityType
-import com.xcape.simplemmomod.data.dto.*
+import com.xcape.simplemmomod.data.dto.GatherResultDto
+import com.xcape.simplemmomod.data.dto.ItemDto
+import com.xcape.simplemmomod.data.dto.toGatherResult
+import com.xcape.simplemmomod.data.dto.toItem
 import com.xcape.simplemmomod.data.remote.AutoSMMORequest
 import com.xcape.simplemmomod.data.remote.JSON_BODY_TYPE
 import com.xcape.simplemmomod.domain.repository.UserRepository
@@ -21,7 +22,6 @@ import com.xcape.simplemmomod.domain.smmo_tasks.LootActions
 import okhttp3.Headers
 import okhttp3.RequestBody.Companion.toRequestBody
 import javax.inject.Inject
-import kotlin.random.Random
 
 class CannotGatherMaterials(override val message: String = "Unknown error gathering materials"): Exception(message)
 
@@ -98,7 +98,7 @@ class LootActionsImpl @Inject constructor(
             }
         }
 
-        return Random.nextLong(1000, 2500)
+        return (1000L..2500L).random()
     }
 
     override suspend fun shouldEquipItem(itemId: String): Boolean {
@@ -136,8 +136,9 @@ class LootActionsImpl @Inject constructor(
             )
         }
 
+        val itemName = Base64.decode(item.name, Base64.DEFAULT)
         user = autoSMMOLogger.log(
-            message = "> Item Stats: ${Base64.decode(item.name, Base64.DEFAULT)} ($itemId) [${item.type} Level ${item.level} ${item.rarity}]",
+            message = "> Item Stats: ${String(itemName)} ($itemId) [${item.type} Level ${item.level} ${item.rarity}]",
             user = user
         )
 
