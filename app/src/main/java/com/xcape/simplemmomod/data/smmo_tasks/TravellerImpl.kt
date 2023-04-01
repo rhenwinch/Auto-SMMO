@@ -325,28 +325,27 @@ class TravellerImpl @Inject constructor(
             userAgent = user.userAgent
         )
 
-        userRepository.updateUser(
-            user = user.copy(
-                gold = userWithEnergy.gold,
-                level = userWithEnergy.level,
-                maxQuestEnergy = userWithEnergy.maxQuestEnergy,
-                maxBattleEnergy = userWithEnergy.maxBattleEnergy,
-                battleEnergy = userWithEnergy.battleEnergy,
-                questEnergy = userWithEnergy.questEnergy
-            )
+        user = user.copy(
+            gold = userWithEnergy.gold,
+            level = userWithEnergy.level,
+            maxQuestEnergy = userWithEnergy.maxQuestEnergy,
+            maxBattleEnergy = userWithEnergy.maxBattleEnergy,
+            battleEnergy = userWithEnergy.battleEnergy,
+            questEnergy = userWithEnergy.questEnergy
         )
+        userRepository.updateUser(user = user)
 
-        val isUserOutOfEnergy = userWithEnergy.questEnergy == 0
+        val isUserOutOfEnergy = user.battleEnergy == 0
         if(isUserOutOfEnergy) {
             return (800L..1500L).random()
         }
 
         user = autoSMMOLogger.log(
-            message = "[ARENA] Energy: ${userWithEnergy.battleEnergy}/${userWithEnergy.maxBattleEnergy}",
+            message = "[ARENA] Energy: ${user.battleEnergy}/${userWithEnergy.maxBattleEnergy}",
             user = user
         )
 
-        var battleEnergy = userWithEnergy.battleEnergy
+        var battleEnergy = user.battleEnergy
         while (battleEnergy > 0) {
             val npc = arenaActions.generateNpc()
             if(npc.result == "You do not have enough energy to do this.") {
@@ -354,7 +353,7 @@ class TravellerImpl @Inject constructor(
             }
 
             user = autoSMMOLogger.log(
-                message = "> Fighting: ${npc.name} (lv. ${npc.level}) at Energy #${battleEnergy}/${userWithEnergy.maxBattleEnergy}...",
+                message = "> Fighting: ${npc.name} (lv. ${npc.level}) at Energy #${battleEnergy}/${user.maxBattleEnergy}...",
                 user = user
             )
             arenaActions.attackNpc(

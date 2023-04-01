@@ -74,13 +74,17 @@ class ArenaActionsImpl @Inject constructor(
         isUserTravelling: Boolean,
     ): Long {
         var user = userRepository.getLoggedInUser()!!
-        val attackNpcUrl = String.format(ATTACK_NPC_URL,
-            getStringInBetween(
-                string = npcId,
-                delimiter1 = "/attack/",
-                delimiter2 = "?"
+        val attackNpcUrl = if(isUserTravelling) {
+            String.format(ATTACK_NPC_URL,
+                getStringInBetween(
+                    string = npcId,
+                    delimiter1 = "/attack/",
+                    delimiter2 = "?"
+                )
             )
-        )
+        } else {
+            String.format(ATTACK_NPC_URL, npcId)
+        }
 
         var isOpponentDefeated = false
         while (!isOpponentDefeated) {
@@ -112,6 +116,11 @@ class ArenaActionsImpl @Inject constructor(
                 )
 
                 val battleResult = responseString.toJson(BattleResultDto::class.java).toBattleResult()
+
+                user = autoSMMOLogger.log(
+                    message = "> Attacked! Opponent's health: ${battleResult.opponentHp}",
+                    user = user
+                )
 
                 val isUserDefeated = battleResult.playerHp == 0
                 if(isUserDefeated)
@@ -148,7 +157,7 @@ class ArenaActionsImpl @Inject constructor(
                         userRepository.updateUser(user = user)
 
                         if(shouldAutoEquip) {
-                            autoSMMOLogger.log(
+                            user = autoSMMOLogger.log(
                                 message = "> Checking if there's previous items found...",
                                 user = user
                             )
@@ -160,13 +169,12 @@ class ArenaActionsImpl @Inject constructor(
                             }
                         }
                     } else {
-                        userRepository.updateUser(
-                            user = user.copy(
-                                cookie = newCookie,
-                                dailyBattles = user.dailyBattles + 1,
-                                totalBattles = user.totalBattles + 1,
-                            )
+                        user = user.copy(
+                            cookie = newCookie,
+                            dailyBattles = user.dailyBattles + 1,
+                            totalBattles = user.totalBattles + 1,
                         )
+                        userRepository.updateUser(user = user)
                     }
                 }
 
