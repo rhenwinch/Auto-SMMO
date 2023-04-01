@@ -6,23 +6,22 @@ import android.content.Intent
 import android.graphics.Bitmap
 import android.os.Bundle
 import android.util.Log
-import android.webkit.CookieManager
-import android.webkit.JavascriptInterface
-import android.webkit.WebResourceRequest
-import android.webkit.WebView
+import android.webkit.*
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.*
+import androidx.compose.material3.ProgressIndicatorDefaults
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.google.accompanist.web.*
 import com.xcape.simplemmomod.common.Constants.APP_TAG
-import com.xcape.simplemmomod.common.Endpoints
+import com.xcape.simplemmomod.common.Endpoints.BASE_URL
 import com.xcape.simplemmomod.common.Endpoints.BOT_VERIFICATION_URL
 import com.xcape.simplemmomod.domain.model.User
 import com.xcape.simplemmomod.ui.common.TabbedMenuItem
@@ -32,9 +31,11 @@ import com.xcape.simplemmomod.ui.webview.WebViewActivity.Companion.listOfSitesTo
 import com.xcape.simplemmomod.ui.webview.WebViewActivity.Companion.openSeparateActivity
 import dagger.hilt.android.AndroidEntryPoint
 
+
 const val FINISHED_LOADING = 1F
 const val START_LOADING = 0F
 
+@Suppress("UNCHECKED_CAST")
 @AndroidEntryPoint
 class WebViewActivity : ComponentActivity() {
 
@@ -44,10 +45,12 @@ class WebViewActivity : ComponentActivity() {
             "/user/view/"
         )
         const val URL_INTENT = "url"
+        const val CUSTOM_TAB_INTENT = "custom_tabbed_view"
 
-        fun Context.openSeparateActivity(url: String) {
+        fun Context.openSeparateActivity(url: String, tabLinks: String? = null) {
             val intent = Intent(this, WebViewActivity::class.java)
             intent.putExtra(URL_INTENT, url)
+            intent.putExtra(CUSTOM_TAB_INTENT, tabLinks)
             startActivity(intent)
         }
     }
@@ -58,11 +61,24 @@ class WebViewActivity : ComponentActivity() {
             val viewModel: WebViewViewModel = viewModel()
             val user by viewModel.user.collectAsState(initial = User())
 
-            val originalUrl = intent.getStringExtra(URL_INTENT)!!
-            var url by remember { mutableStateOf(originalUrl) }
-
+            var originalUrl = intent.getStringExtra(URL_INTENT)!!
+            val customTabs = intent.getStringExtra(CUSTOM_TAB_INTENT)
+            val tabItem = originalUrl.toTabbedMenuItem(customTabs)
             var selectedTab by remember { mutableStateOf(0) }
-            val tabItem = originalUrl.toTabbedMenuItem()
+
+            var url by remember {
+                if(tabItem is TabbedMenuItem.Custom) {
+                    val firstKey = (tabItem.tabs as Map<String, Pair<String, Int>>).keys.first()
+                    mutableStateOf(originalUrl + tabItem.tabs[firstKey]!!.first)
+                } else {
+                    mutableStateOf(originalUrl)
+                }
+            }
+
+            if(tabItem is TabbedMenuItem.Custom) {
+                val firstKey = (tabItem.tabs as Map<String, Pair<String, Int>>).keys.first()
+                originalUrl += tabItem.tabs[firstKey]!!.first
+            }
 
             val webViewState = rememberWebViewState(url = url, additionalHttpHeaders = emptyMap())
             val webViewNavigator = rememberWebViewNavigator()
@@ -94,8 +110,9 @@ class WebViewActivity : ComponentActivity() {
                                     selectedTab = index
 
                                     val newUrl = when {
-                                        tabItem == TabbedMenuItem.PROFILE && index == 0 -> originalUrl
-                                        tabItem == TabbedMenuItem.TASKS -> String.format("${Endpoints.BASE_URL}/tasks/%s", tab)
+                                        tabItem is TabbedMenuItem.Profile && index == 0 -> originalUrl
+                                        tabItem is TabbedMenuItem.Tasks -> String.format("$BASE_URL/tasks/%s", tab)
+                                        tabItem is TabbedMenuItem.Custom -> BASE_URL + tab
                                         else -> String.format("%s/%s", originalUrl, tab)
                                     }
                                     url = newUrl
@@ -132,6 +149,7 @@ class WebViewActivity : ComponentActivity() {
     }
 }
 
+@Suppress("unused", "UNUSED_PARAMETER")
 @SuppressLint("SetJavaScriptEnabled")
 @Composable
 fun WebViewContent(
@@ -143,7 +161,7 @@ fun WebViewContent(
     onWebViewLoading: (Float) -> Unit,
     onCookieChange: (String?) -> Unit,
     onLoginChange: (WebView?, String?, CookieManager) -> Unit,
-    modifier: Modifier
+    modifier: Modifier,
 ) {
     val context = LocalContext.current
 
@@ -169,7 +187,7 @@ fun WebViewContent(
 
             override fun shouldOverrideUrlLoading(
                 view: WebView?,
-                request: WebResourceRequest?
+                request: WebResourceRequest?,
             ): Boolean {
                 val url = request!!.url.toString()
 
@@ -191,6 +209,11 @@ fun WebViewContent(
                 super.onProgressChanged(view, newProgress)
                 onWebViewLoading(newProgress / 100F)
             }
+
+            override fun onConsoleMessage(consoleMessage: ConsoleMessage?): Boolean {
+                Log.d(APP_TAG, "[${consoleMessage?.messageLevel() ?: "Unknown"}] > ${consoleMessage?.message() ?: "No message provided"}")
+                return super.onConsoleMessage(consoleMessage)
+            }
         }
     }
 
@@ -210,6 +233,18 @@ fun WebViewContent(
                         activityKiller(webViewState.lastLoadedUrl == BOT_VERIFICATION_URL)
                     }
                 }, "ok")
+
+                addJavascriptInterface(object {
+                    @JavascriptInterface
+                    fun openFixedTabPage(title: String, links: String) {
+                        context.openSeparateActivity(BASE_URL, links)
+                    }
+
+                    @JavascriptInterface
+                    fun openScrollableTabPage(title: String, links: String) {
+                        context.openSeparateActivity(BASE_URL, links)
+                    }
+                }, "app")
             }
         },
         client = webClient,

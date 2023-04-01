@@ -179,13 +179,12 @@ class TravellerImpl @Inject constructor(
                 val newEquippableItems = user.toEquipItems.toMutableList()
                 newEquippableItems.add(itemId)
 
-                userRepository.updateUser(
-                    user = user.copy(
-                        toEquipItems = newEquippableItems,
-                        dailyItemsFound = user.dailyItemsFound + 1,
-                        totalItemsFound = user.totalItemsFound + 1
-                    )
+                user = user.copy(
+                    toEquipItems = newEquippableItems,
+                    dailyItemsFound = user.dailyItemsFound + 1,
+                    totalItemsFound = user.totalItemsFound + 1
                 )
+                userRepository.updateUser(user = user)
 
                 user = autoSMMOLogger.log(
                     message = "[STEP #${user.dailySteps}] You've found (Item): $itemName",
