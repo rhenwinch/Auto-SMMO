@@ -139,14 +139,13 @@ class ArenaActionsImpl @Inject constructor(
                         val (_, itemId) = parseItemLoot(battleMessage, isFromNpc = true)
 
                         val newEquippableItems = user.toEquipItems + itemId
-                        userRepository.updateUser(
-                            user = user.copy(
-                                cookie = newCookie,
-                                toEquipItems = newEquippableItems,
-                                dailyItemsFound = user.dailyItemsFound + 1,
-                                totalItemsFound = user.totalItemsFound + 1
-                            )
+                        user = user.copy(
+                            cookie = newCookie,
+                            toEquipItems = newEquippableItems,
+                            dailyItemsFound = user.dailyItemsFound + 1,
+                            totalItemsFound = user.totalItemsFound + 1
                         )
+                        userRepository.updateUser(user = user)
 
                         if(shouldAutoEquip) {
                             autoSMMOLogger.log(
