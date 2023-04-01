@@ -147,6 +147,7 @@ class TravellerForegroundService : LifecycleService(), OnTravellerStateChange {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
                     stopForeground(STOP_FOREGROUND_REMOVE)
                 } else {
+                    @Suppress("DEPRECATION")
                     stopForeground(true)
                 }
                 stopSelf()
@@ -289,7 +290,7 @@ class TravellerForegroundService : LifecycleService(), OnTravellerStateChange {
             }
             catch (e: Exception) {
                 e.printStackTrace()
-                onError(e.localizedMessage ?: "Unknown error!")
+                onError(e.stackTraceToString())
             }
         }
 

@@ -1,13 +1,10 @@
 package com.xcape.simplemmomod.ui.autotravelui
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalClipboardManager
-import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
@@ -23,8 +20,6 @@ fun AutoTravelDialog(
     errorMessage: String,
     onConsumeError: () -> Unit
 ) {
-    val clipboardManager = LocalClipboardManager.current
-
     AlertDialog(
         onDismissRequest = onConsumeError
     ) {
@@ -47,18 +42,23 @@ fun AutoTravelDialog(
                     modifier = Modifier.padding(bottom = 15.dp, top = 10.dp)
                 )
 
-                Text(
-                    text = errorMessage,
-                    style = TextStyle(
-                        textAlign = TextAlign.Justify,
-                        fontSize = 15.sp,
+                TextField(
+                    value = errorMessage,
+                    onValueChange = {  },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(300.dp)
+                        .padding(
+                            bottom = 30.dp,
+                            end = 15.dp,
+                            start = 15.dp
+                        ),
+                    textStyle = TextStyle(
+                        fontSize = 11.sp,
                         fontFamily = FontFamily.Monospace,
                         fontWeight = FontWeight.Normal
                     ),
-                    modifier = Modifier.padding(bottom = 30.dp)
-                        .clickable {
-                            clipboardManager.setText(AnnotatedString(errorMessage))
-                        }
+                    readOnly = true
                 )
 
                 Button(
