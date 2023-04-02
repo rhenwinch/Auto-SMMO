@@ -1,11 +1,8 @@
 package com.xcape.simplemmomod.data.remote
 
-import com.xcape.simplemmomod.common.Resource
 import com.xcape.simplemmomod.domain.model.AutoSMMOResponse
 import com.xcape.simplemmomod.domain.repository.UserRepository
 import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Dispatchers.IO
 import kotlinx.coroutines.withContext
 import okhttp3.*
 import okhttp3.MediaType.Companion.toMediaType
@@ -42,7 +39,7 @@ class AutoSMMORequest @Inject constructor(
 
             AutoSMMOResponse(
                 newCookies.joinToString("; ") { it.split(";")[0] },
-                response.body!!.byteStream().bufferedReader().use { it.readText() }
+                response.body.byteStream().bufferedReader().use { it.readText() }
             )
         }
     }
@@ -74,7 +71,7 @@ class AutoSMMORequest @Inject constructor(
 
             AutoSMMOResponse(
                 newCookies.joinToString("; ") { it.split(";")[0] },
-                response.body!!.byteStream().bufferedReader().use { it.readText() }
+                response.body.byteStream().bufferedReader().use { it.readText() }
             )
         }
     }

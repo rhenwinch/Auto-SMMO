@@ -139,7 +139,7 @@ class WebViewActivity : ComponentActivity() {
                                     viewModel.onEvent(WebViewUiEvent.ChangedWebsite(it))
                                 }
                             },
-                            onLoginChange = { _, _, _ -> },
+                            onLoginChange = { },
                             modifier = Modifier.padding(padding)
                         )
                     }
@@ -160,7 +160,7 @@ fun WebViewContent(
     onTitleChange: (String) -> Unit = { },
     onWebViewLoading: (Float) -> Unit,
     onCookieChange: (String?) -> Unit,
-    onLoginChange: (WebView?, String?, CookieManager) -> Unit,
+    onLoginChange: (String?) -> Unit,
     modifier: Modifier,
 ) {
     val context = LocalContext.current
@@ -181,8 +181,7 @@ fun WebViewContent(
                 val cookieManager = CookieManager.getInstance()
                 val cookie = cookieManager.getCookie(url)
                 onCookieChange(cookie)
-
-                onLoginChange(view, cookie, cookieManager)
+                onLoginChange(cookie)
             }
 
             override fun shouldOverrideUrlLoading(
@@ -245,6 +244,17 @@ fun WebViewContent(
                         context.openSeparateActivity(BASE_URL, links)
                     }
                 }, "app")
+
+                addJavascriptInterface(object {
+                    @JavascriptInterface
+                    fun showAd() {
+                        post {
+                            val fingerprint =
+                                "samsung/a54ks/a54:13/TP1A.220624.014/A545NKSU2DWB6:user/release-keys"
+                            loadUrl("javascript:redeemedReward(\"${fingerprint}\")")
+                        }
+                    }
+                }, "oktwo")
             }
         },
         client = webClient,

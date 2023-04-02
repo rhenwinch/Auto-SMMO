@@ -9,19 +9,16 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.google.accompanist.web.rememberWebViewNavigator
 import com.google.accompanist.web.rememberWebViewState
-import com.xcape.simplemmomod.R
 import com.xcape.simplemmomod.common.Endpoints.ABOUT_URL
 import com.xcape.simplemmomod.common.Endpoints.BATTLE_URL
 import com.xcape.simplemmomod.common.Endpoints.CHARACTER_URL
@@ -55,13 +52,13 @@ import com.xcape.simplemmomod.domain.model.User
 import com.xcape.simplemmomod.ui.account_picker.AccountPickerActivity
 import com.xcape.simplemmomod.ui.account_picker.USER_DATA
 import com.xcape.simplemmomod.ui.autotravelui.AutoTravelActivity
-import com.xcape.simplemmomod.ui.common.BasicTopAppBar
 import com.xcape.simplemmomod.ui.common.MenuItem
 import com.xcape.simplemmomod.ui.theme.SimpleMMOModTheme
 import com.xcape.simplemmomod.ui.webview.WebViewActivity.Companion.openSeparateActivity
 import com.xcape.simplemmomod.ui.webview.WebViewContent
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
+
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -75,7 +72,7 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun MainApp(
-    viewModel: MainViewModel = viewModel()
+    viewModel: MainViewModel = viewModel(),
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -115,10 +112,7 @@ fun MainApp(
                     cookieManager.setCookie(HOME_URL, key)
                 }
 
-                viewModel.onEvent(MainUiEvent.ClickedLogoutButton(
-                    isLoggedIn = true,
-                    cookie = cookie
-                ))
+                viewModel.login(cookie = cookie)
 
                 viewModel.updateUserAgentPreference()
 
@@ -180,7 +174,10 @@ fun MainApp(
         MenuItem.Settings { onWebStateChange(SETTINGS_URL) },
         MenuItem.About { onWebStateChange(ABOUT_URL) },
         MenuItem.Support { onWebStateChange(SUPPORT_URL) },
-        MenuItem.Logout { onWebStateChange(LOGOUT_URL) },
+        MenuItem.Logout {
+            onWebStateChange(LOGOUT_URL)
+            viewModel.onEvent(MainUiEvent.ClickedLogoutButton)
+        },
     )
 
     val drawerBodyLoggedOutMenuItems = listOf(
@@ -262,30 +259,10 @@ fun MainApp(
                                         )
                                     }
                                 },
-                                onLoginChange = { view, cookie, cookieManager ->
+                                onLoginChange = { cookie ->
                                     cookie?.let {
-                                        val isUserSignedIn = cookie.contains("remember_web", ignoreCase = true)
-                                        val isUserSignedOut = user.loggedIn && url == LOGOUT_URL && !isUserSignedIn
-
-                                        if(isUserSignedIn) {
-                                            viewModel.onEvent(
-                                                MainUiEvent.ClickedLogoutButton(
-                                                    isLoggedIn = true,
-                                                    cookie = cookie
-                                                )
-                                            )
-                                        } else if(isUserSignedOut) {
-                                            viewModel.onEvent(
-                                                MainUiEvent.ClickedLogoutButton(
-                                                    isLoggedIn = false,
-                                                    cookie = cookie
-                                                )
-                                            )
-
-                                            cookieManager.removeAllCookies(null)
-                                            cookieManager.flush()
-
-                                            view?.clearCache(true)
+                                        if(!isUserLoggedIn) {
+                                            viewModel.login(cookie = cookie)
                                         }
                                     }
                                 },
@@ -294,42 +271,6 @@ fun MainApp(
                         }
                     },
                 )
-            }
-        }
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun AppPreview() {
-    SimpleMMOModTheme {
-        var progress by remember { mutableStateOf(0.1F) }
-        val animatedProgress by animateFloatAsState(
-            targetValue = progress,
-            animationSpec = ProgressIndicatorDefaults.ProgressAnimationSpec
-        )
-
-        Scaffold(
-            topBar = {
-                BasicTopAppBar(header = stringResource(id = R.string.app_name), onNavigationIconClick = {}, progress = animatedProgress)
-            }
-        ) {
-            Row {
-                Button(
-                    onClick = { progress += 0.1F },
-                    modifier = Modifier.padding(it)
-                ) {
-                    Text("Increase")
-                }
-
-                Spacer(modifier = Modifier.width(50.dp))
-
-                Button(
-                    onClick = { progress = 0F },
-                    modifier = Modifier.padding(it)
-                ) {
-                    Text("Reset")
-                }
             }
         }
     }

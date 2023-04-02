@@ -1,6 +1,9 @@
 package com.xcape.simplemmomod.ui.main
 
-import androidx.compose.animation.*
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -19,14 +22,18 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.constraintlayout.compose.ConstraintLayout
+import androidx.constraintlayout.compose.Dimension
 import coil.compose.AsyncImage
-import com.xcape.simplemmomod.common.Endpoints.BASE_URL
 import com.xcape.simplemmomod.domain.model.User
 import com.xcape.simplemmomod.ui.common.IconResource
 import com.xcape.simplemmomod.ui.common.MenuItem
+import com.xcape.simplemmomod.ui.theme.SimpleMMOModTheme
 
 @Composable
 fun NavigationDrawer(
@@ -64,7 +71,6 @@ fun DrawerHeader(
     val notifications = menuItems["notifications"]!!
     val character = menuItems["character"]!!
 
-
     Row {
         ConstraintLayout(
             modifier = Modifier.fillMaxWidth()
@@ -86,13 +92,13 @@ fun DrawerHeader(
             )
 
             Column(
-                verticalArrangement = Arrangement.Center,
-                horizontalAlignment = Alignment.CenterHorizontally,
                 modifier = Modifier
                     .constrainAs(column) {
                         start.linkTo(image.end, margin = 5.dp)
+                        end.linkTo(messagesButton.start, margin = 15.dp)
                         top.linkTo(parent.top)
                         bottom.linkTo(parent.bottom)
+                        width = Dimension.fillToConstraints
                     }
                     .clickable {
                         onViewChange(character.route)
@@ -106,16 +112,23 @@ fun DrawerHeader(
                 }) {
                     Text(
                         text = user.username,
+                        textAlign = TextAlign.Start,
                         fontSize = 13.sp,
                         fontWeight = FontWeight.Normal,
-                        modifier = Modifier.padding(vertical = 2.dp)
+                        maxLines = 1,
+                        modifier = Modifier
+                            .padding(vertical = 2.dp),
+                        overflow = TextOverflow.Ellipsis
                     )
                 }
 
                 Text(
                     text = "#${user.id}",
+                    textAlign = TextAlign.Left,
                     fontSize = 13.sp,
-                    fontWeight = FontWeight.Thin
+                    fontWeight = FontWeight.Thin,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                 )
             }
 
@@ -213,21 +226,21 @@ fun DrawerBody(
 ) {
     val itemsToUse = if(isUserLoggedIn) "loggedIn" else "loggedOut"
 
+    if(isUserLoggedIn && user.id != 0) {
+        DrawerHeader(
+            user = user,
+            menuItems = headerMenuItems,
+            onViewChange = onViewChange
+        )
+
+        Divider(
+            thickness = 1.dp,
+            modifier = Modifier.padding(horizontal = 15.dp)
+        )
+    }
+
     LazyColumn {
         itemsIndexed(menuItems[itemsToUse]!!) { i, item ->
-            if(i == 0 && isUserLoggedIn) {
-                DrawerHeader(
-                    user = user,
-                    menuItems = headerMenuItems,
-                    onViewChange = onViewChange
-                )
-
-                Divider(
-                    thickness = 1.dp,
-                    modifier = Modifier.padding(horizontal = 15.dp)
-                )
-            }
-
             val isSelected = selectedItem == item.route
             val iconColor: Color by animateColorAsState(
                 if (isSelected)
@@ -263,6 +276,21 @@ fun DrawerBody(
                     modifier = Modifier.weight(1f)
                 )
             }
+        }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun AppPreview() {
+    SimpleMMOModTheme {
+        Box(Modifier.width(300.dp)) {
+            val drawerHeaderMenuItems = mapOf(
+                "messages" to MenuItem.Messages {  },
+                "notifications" to MenuItem.Notifications {  },
+                "character" to MenuItem.Character {  }
+            )
+            DrawerHeader(user = User().copy(username = "eeateat asi", id = 0), menuItems = drawerHeaderMenuItems, onViewChange = {})
         }
     }
 }
