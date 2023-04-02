@@ -96,7 +96,6 @@ class TravellerForegroundService : LifecycleService(), OnTravellerStateChange {
     inner class TravellerBroadcastReceiver: BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
             intent?.getStringExtra(BROADCAST_MSG)?.let {
-                println("Received > $it")
                 onActionChange(it, intent)
             }
         }

@@ -39,8 +39,6 @@
         </activity>
         <activity
             android:name=".ui.autotravelui.AutoTravelActivity"
-            android:launchMode="singleTop"
-            android:taskAffinity=""
             android:theme="@style/Theme.AutoSMMO" />
         <activity
             android:name=".ui.account_picker.AccountPickerActivity"
