@@ -1,6 +1,7 @@
 package com.xcape.simplemmomod.common
 
 import com.google.gson.Gson
+import java.util.*
 
 object Functions {
     inline fun <reified T : Any> String.toJson(jsonObject: Class<T>): T {
@@ -17,7 +18,7 @@ object Functions {
     }
 
     fun getTimeInMilliseconds(): Long {
-        return System.currentTimeMillis()
+        return Calendar.getInstance(TimeZone.getTimeZone("UTC")).timeInMillis
     }
 
     fun isUserWayPastDailyResetTime(resetTime: Long): Boolean {
