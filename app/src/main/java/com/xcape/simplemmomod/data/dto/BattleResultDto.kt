@@ -21,6 +21,8 @@ fun BattleResultDto.toBattleResult(): BattleResult {
         isSuccess = type == "success",
         result = result,
         opponentHp = opponent_hp,
-        playerHp = player_hp
+        opponentHpPercentage = player_hp_percentage,
+        playerHp = player_hp,
+        playerHpPercentage = player_hp_percentage,
     )
 }

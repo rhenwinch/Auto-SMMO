@@ -46,7 +46,7 @@ class TravellerImpl @Inject constructor(
     private val autoSMMORequest: AutoSMMORequest,
     private val autoSMMOLogger: AutoSMMOLogger,
     private val lootActions: LootActions,
-    private val arenaActions: ArenaActions,
+    private val npcActions: NpcActions,
     private val questActions: QuestActions
 ) : Traveller {
     override var energyTimer: Long = getTimeInMilliseconds()
@@ -135,7 +135,7 @@ class TravellerImpl @Inject constructor(
 
         if(isUserOnANewLevel(oldLevel = user.level, newLevel = currentLevel)) {
             user = autoSMMOLogger.log(
-                message = "New level! -> ${user.level} > $currentLevel",
+                message = "> New level! -> ${user.level} > $currentLevel",
                 user = user
             )
         }
@@ -213,7 +213,7 @@ class TravellerImpl @Inject constructor(
                 )
 
                 if(!shouldSkipNPCs)
-                    waitTime += arenaActions.attackNpc(
+                    waitTime += npcActions.attackNpc(
                         npcId = npcId,
                         verifyCallback = { verify() },
                         shouldAutoEquip = shouldAutoEquip
@@ -288,7 +288,7 @@ class TravellerImpl @Inject constructor(
             val toLog = if(questResponse.isQuestFailed) {
                 "> Failed Quest Point #$questEnergy/${userWithEnergy.maxQuestEnergy}: ${questResponse.resultText}"
             } else {
-                "> Quest Point #${questEnergy}/${userWithEnergy.maxQuestEnergy}: {status} -> ${questResponse.gold} gold and ${questResponse.exp} exp"
+                "> Quest Point #${questEnergy}/${userWithEnergy.maxQuestEnergy}: ${questResponse.status} -> ${questResponse.gold} gold and ${questResponse.exp} exp"
             }
 
             user = autoSMMOLogger.log(
@@ -347,17 +347,14 @@ class TravellerImpl @Inject constructor(
 
         var battleEnergy = user.battleEnergy
         while (battleEnergy > 0) {
-            val npc = arenaActions.generateNpc()
+            val npc = npcActions.generateNpc()
             if(npc.result == "You do not have enough energy to do this.") {
                 return (800L..1500L).random()
             }
 
-            user = autoSMMOLogger.log(
-                message = "> Fighting: ${npc.name} (lv. ${npc.level}) at Energy #${battleEnergy}/${user.maxBattleEnergy}...",
-                user = user
-            )
-            arenaActions.attackNpc(
+            npcActions.attackNpc(
                 npcId = npc.id.toString(),
+                npc = npc,
                 verifyCallback = { verify() },
                 shouldAutoEquip = shouldAutoEquip,
                 isUserTravelling = false

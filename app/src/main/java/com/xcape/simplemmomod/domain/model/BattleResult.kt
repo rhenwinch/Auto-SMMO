@@ -4,5 +4,7 @@ data class BattleResult(
     val isSuccess: Boolean,
     val result: String?,
     val opponentHp: Int,
-    val playerHp: Int
+    val opponentHpPercentage: Int,
+    val playerHp: Int,
+    val playerHpPercentage: Int,
 )

@@ -16,9 +16,10 @@ import com.xcape.simplemmomod.data.dto.toNpc
 import com.xcape.simplemmomod.data.remote.AutoSMMORequest
 import com.xcape.simplemmomod.domain.model.Npc
 import com.xcape.simplemmomod.domain.repository.UserRepository
-import com.xcape.simplemmomod.domain.smmo_tasks.ArenaActions
+import com.xcape.simplemmomod.domain.smmo_tasks.NpcActions
 import com.xcape.simplemmomod.domain.smmo_tasks.AutoSMMOLogger
 import com.xcape.simplemmomod.domain.smmo_tasks.LootActions
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.delay
 import okhttp3.FormBody
 import okhttp3.Headers
@@ -27,12 +28,12 @@ import javax.inject.Inject
 class CannotGenerateNpc(override val message: String = "Unknown error generating npc"): Exception(message)
 class CannotAttackNpc(override val message: String = "Unknown error attacking npc"): Exception(message)
 
-class ArenaActionsImpl @Inject constructor(
+class NpcActionsImpl @Inject constructor(
     private val autoSMMORequest: AutoSMMORequest,
     private val userRepository: UserRepository,
     private val lootActions: LootActions,
     private val autoSMMOLogger: AutoSMMOLogger
-) : ArenaActions {
+) : NpcActions {
     override suspend fun generateNpc(): Npc {
         try {
             val user = userRepository.getLoggedInUser()!!
@@ -62,14 +63,17 @@ class ArenaActionsImpl @Inject constructor(
             )
 
             return responseString.toJson(NpcDto::class.java).toNpc()
-        } catch (e: Exception) {
+        }
+        catch (e: Exception) {
             throw CannotGenerateNpc(message = "Could not generate NPC: ${e.localizedMessage}")
         }
     }
 
     override suspend fun attackNpc(
         npcId: String,
+        npc: Npc?,
         verifyCallback: suspend () -> Unit,
+        healthPercentageToRetreatOn: Int,
         shouldAutoEquip: Boolean,
         isUserTravelling: Boolean,
     ): Long {
@@ -84,6 +88,13 @@ class ArenaActionsImpl @Inject constructor(
             )
         } else {
             String.format(ATTACK_NPC_URL, npcId)
+        }
+
+        if(npc != null) {
+            user = autoSMMOLogger.log(
+                message = "> Fighting: ${npc.name} (lv. ${npc.level})...",
+                user = user
+            )
         }
 
         var isOpponentDefeated = false
@@ -118,9 +129,21 @@ class ArenaActionsImpl @Inject constructor(
                 val battleResult = responseString.toJson(BattleResultDto::class.java).toBattleResult()
 
                 user = autoSMMOLogger.log(
-                    message = "> Attacked! Opponent's health: ${battleResult.opponentHp}",
+                    message = "> Attacked! Health (Opponent/Player): ${battleResult.opponentHp}/${battleResult.playerHp}",
                     user = user
                 )
+
+                val shouldUserRetreat =
+                    battleResult.playerHpPercentage <= healthPercentageToRetreatOn
+                    && battleResult.opponentHpPercentage > battleResult.playerHpPercentage
+
+                if(shouldUserRetreat) {
+                    autoSMMOLogger.log(
+                        message = "> Couldn't finish NPC! Retreating...",
+                        user = user
+                    )
+                    return (1000L..2500L).random()
+                }
 
                 val isUserDefeated = battleResult.playerHp == 0
                 if(isUserDefeated)
@@ -180,6 +203,7 @@ class ArenaActionsImpl @Inject constructor(
 
                 delay((1000L..2500L).random())
             }
+            catch (_: CancellationException) { }
             catch (e: Exception) {
                 throw CannotAttackNpc(message = "Could not attack NPC: ${e.localizedMessage}")
             }

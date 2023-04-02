@@ -108,7 +108,7 @@ class AppModule {
         userApiServiceRepository: UserApiServiceRepository,
         autoSMMORequest: AutoSMMORequest,
         lootActions: LootActions,
-        arenaActions: ArenaActions,
+        npcActions: NpcActions,
         questActions: QuestActions,
         autoSMMOLogger: AutoSMMOLogger
     ): Traveller = TravellerImpl(
@@ -117,7 +117,7 @@ class AppModule {
         autoSMMORequest = autoSMMORequest,
         autoSMMOLogger = autoSMMOLogger,
         lootActions = lootActions,
-        arenaActions = arenaActions,
+        npcActions = npcActions,
         questActions = questActions
     )
 
@@ -140,7 +140,7 @@ class AppModule {
         autoSMMORequest: AutoSMMORequest,
         lootActions: LootActions,
         autoSMMOLogger: AutoSMMOLogger,
-    ): ArenaActions = ArenaActionsImpl(
+    ): NpcActions = NpcActionsImpl(
         userRepository = userRepository,
         autoSMMORequest = autoSMMORequest,
         autoSMMOLogger = autoSMMOLogger,
