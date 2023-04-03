@@ -44,6 +44,7 @@ class MainViewModel @Inject constructor(
             }
 
             launch {
+                _user.update { userRepository.getLoggedInUser() ?: it }
                 fetchUser()
             }
         }
