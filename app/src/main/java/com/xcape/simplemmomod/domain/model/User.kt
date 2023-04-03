@@ -23,6 +23,7 @@ data class User(
     @ColumnInfo val battleEnergy: Int = 0,
     @ColumnInfo val maxBattleEnergy: Int = 0,
     @ColumnInfo val needsVerification: Boolean = false,
+    @ColumnInfo val currentHealthPercentage: Int = 100,
 
     // Total Stats
     @ColumnInfo val totalSteps: Int = 0,

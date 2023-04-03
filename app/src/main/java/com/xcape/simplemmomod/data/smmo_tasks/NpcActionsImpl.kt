@@ -16,9 +16,9 @@ import com.xcape.simplemmomod.data.dto.toNpc
 import com.xcape.simplemmomod.data.remote.AutoSMMORequest
 import com.xcape.simplemmomod.domain.model.Npc
 import com.xcape.simplemmomod.domain.repository.UserRepository
-import com.xcape.simplemmomod.domain.smmo_tasks.NpcActions
 import com.xcape.simplemmomod.domain.smmo_tasks.AutoSMMOLogger
 import com.xcape.simplemmomod.domain.smmo_tasks.LootActions
+import com.xcape.simplemmomod.domain.smmo_tasks.NpcActions
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.delay
 import okhttp3.FormBody
@@ -97,6 +97,14 @@ class NpcActionsImpl @Inject constructor(
             )
         }
 
+        if(user.currentHealthPercentage <= healthPercentageToRetreatOn) {
+            autoSMMOLogger.log(
+                message = "> Couldn't finish NPC! Retreating...",
+                user = user
+            )
+            return -1L
+        }
+
         var isOpponentDefeated = false
         while (!isOpponentDefeated) {
             try {
@@ -128,21 +136,21 @@ class NpcActionsImpl @Inject constructor(
 
                 val battleResult = responseString.toJson(BattleResultDto::class.java).toBattleResult()
 
+                user = user.copy(currentHealthPercentage = battleResult.playerHpPercentage)
+
                 user = autoSMMOLogger.log(
                     message = "> Attacked! Health (Opponent/Player): ${battleResult.opponentHp}/${battleResult.playerHp}",
                     user = user
                 )
 
-                val shouldUserRetreat =
-                    battleResult.playerHpPercentage <= healthPercentageToRetreatOn
-                    && battleResult.opponentHpPercentage > battleResult.playerHpPercentage
+                val shouldUserRetreat = battleResult.playerHpPercentage <= healthPercentageToRetreatOn
 
                 if(shouldUserRetreat) {
                     autoSMMOLogger.log(
                         message = "> Couldn't finish NPC! Retreating...",
                         user = user
                     )
-                    return (1000L..2500L).random()
+                    return -1L
                 }
 
                 val isUserDefeated = battleResult.playerHp == 0

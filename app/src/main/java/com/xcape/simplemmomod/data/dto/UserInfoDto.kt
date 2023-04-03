@@ -1,6 +1,5 @@
 package com.xcape.simplemmomod.data.dto
 
-import com.xcape.simplemmomod.common.Endpoints
 import com.xcape.simplemmomod.common.Endpoints.BASE_URL
 import com.xcape.simplemmomod.domain.model.User
 
@@ -48,6 +47,7 @@ fun UserInfoDto.toUser(): User {
         level = level.replace(",", "").toInt(),
         avatar = BASE_URL + avatar,
         totalSteps = total_steps.replace(",", "").toInt(),
+        currentHealthPercentage = hp_percent,
         maxBattleEnergy = max_energy.toInt(),
         maxQuestEnergy = max_quest_points.toInt(),
         battleEnergy = energy.toInt(),

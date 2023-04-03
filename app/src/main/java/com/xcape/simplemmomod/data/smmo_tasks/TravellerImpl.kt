@@ -331,7 +331,8 @@ class TravellerImpl @Inject constructor(
             maxQuestEnergy = userWithEnergy.maxQuestEnergy,
             maxBattleEnergy = userWithEnergy.maxBattleEnergy,
             battleEnergy = userWithEnergy.battleEnergy,
-            questEnergy = userWithEnergy.questEnergy
+            questEnergy = userWithEnergy.questEnergy,
+            currentHealthPercentage = userWithEnergy.currentHealthPercentage
         )
         userRepository.updateUser(user = user)
 
@@ -352,13 +353,26 @@ class TravellerImpl @Inject constructor(
                 return (800L..1500L).random()
             }
 
-            npcActions.attackNpc(
+            val userWithHealth = userApiServiceRepository.getUser(
+                cookie = user.cookie,
+                apiToken = user.apiToken,
+                userAgent = user.userAgent
+            )
+            user = userRepository.getLoggedInUser()!!.copy(currentHealthPercentage = userWithHealth.currentHealthPercentage)
+            userRepository.updateUser(user = user)
+
+            val shouldRetreat = npcActions.attackNpc(
                 npcId = npc.id.toString(),
                 npc = npc,
                 verifyCallback = { verify() },
                 shouldAutoEquip = shouldAutoEquip,
                 isUserTravelling = false
-            )
+            ) == -1L
+
+            if(shouldRetreat) {
+                return -1L
+            }
+
             battleEnergy -= 1
             delay((1500L..3000L).random())
         }
