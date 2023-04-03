@@ -132,13 +132,14 @@ class TravellerForegroundService : LifecycleService(), OnTravellerStateChange {
 
         when (action) {
             ACTION_START_TRAVELLING -> {
-                toLog = "[SERVICE]> Starting service..."
                 if(isFirstRun) {
+                    toLog = "[SERVICE]> Starting service..."
                     isFirstRun = false
+
                     resetTravellerState()
-                    startTravellerService()
                     bindTravellingStatusToNotificationTitle()
-                    bindUserVerificationRequirements()
+                    bindUserToService()
+                    startTravellerService()
                 }
             }
             ACTION_STOP_TRAVELLING -> {
@@ -313,14 +314,28 @@ class TravellerForegroundService : LifecycleService(), OnTravellerStateChange {
         }
     }
 
-    private fun bindUserVerificationRequirements() {
+    private fun bindUserToService() {
+        val needsVerification = user.map {
+            it?.needsVerification ?: false
+        }.distinctUntilChanged()
+
+        val travelLogCleaner = user.map {
+            val lines = it?.travelLog?.lines()?.size
+            val cleanLogsOnLinesCount = 400
+
+            if(lines != null && lines >= cleanLogsOnLinesCount) {
+                it
+            } else null
+        }.distinctUntilChanged()
+
         lifecycleScope.launch {
-            user.collect {
-                it?.apply {
+            // Verify flow
+            launch {
+                needsVerification.collect { verify ->
                     val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE)
                             as NotificationManager
 
-                    if (needsVerification) {
+                    if (verify) {
                         onStatusChange(TravellingStatus.Verify)
 
                         val notificationBuilder = createVerificationNotification()
@@ -328,6 +343,18 @@ class TravellerForegroundService : LifecycleService(), OnTravellerStateChange {
                         notificationManager.notify(VERIFICATION_NOTIFICATION_ID, notificationBuilder.build())
                     } else {
                         notificationManager.cancel(VERIFICATION_NOTIFICATION_ID)
+                    }
+                }
+            }
+
+            // Travel log flow
+            launch {
+                travelLogCleaner.collect { userCleaner ->
+                    val shouldClean = userCleaner != null && state.value.header == TravellingStatus.Idle
+                    if(shouldClean) {
+                        userRepository.updateUser(
+                            user = userCleaner!!.copy(travelLog = "[SERVICE]> Freed up travel logs!")
+                        )
                     }
                 }
             }
