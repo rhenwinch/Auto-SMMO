@@ -19,6 +19,7 @@ import com.xcape.simplemmomod.data.remote.JSON_BODY_TYPE
 import com.xcape.simplemmomod.domain.repository.UserRepository
 import com.xcape.simplemmomod.domain.smmo_tasks.AutoSMMOLogger
 import com.xcape.simplemmomod.domain.smmo_tasks.LootActions
+import kotlinx.coroutines.delay
 import okhttp3.Headers
 import okhttp3.RequestBody.Companion.toRequestBody
 import javax.inject.Inject
@@ -92,6 +93,8 @@ class LootActionsImpl @Inject constructor(
                     totalMaterialsFound = ++totalMaterialsFound
                 )
                 userRepository.updateUser(user = newUser)
+
+                delay((1000L..2500L).random())
             }
             catch (e: Exception) {
                 throw CannotGatherMaterials(message = "Could not gather material: ${e.localizedMessage}")
