@@ -149,12 +149,14 @@ fun AutoTravelUi(
                         if(!isPausing) {
                             user?.let {
                                 if(isUserWayPastDailyResetTime(resetTime = it.dailyResetTime)) {
-                                    viewModel.resetUserDailies()
-                                    snackbarHostState.showSnackbar(
-                                        message = "Dailies have been reset!",
-                                        withDismissAction = true,
-                                        duration = SnackbarDuration.Short
-                                    )
+                                    scope.launch {
+                                        viewModel.resetUserDailies()
+                                        snackbarHostState.showSnackbar(
+                                            message = "Dailies have been reset!",
+                                            withDismissAction = true,
+                                            duration = SnackbarDuration.Short
+                                        )
+                                    }
                                 }
                             }
 
