@@ -5,6 +5,7 @@ import android.app.NotificationManager
 import android.app.NotificationManager.IMPORTANCE_HIGH
 import android.app.NotificationManager.IMPORTANCE_LOW
 import android.app.PendingIntent
+import android.app.TaskStackBuilder
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
@@ -259,10 +260,13 @@ class TravellerForegroundService : LifecycleService(), OnTravellerStateChange {
                         waitTime += traveller.doQuest()
 
                         onStatusChange(TravellingStatus.Battling)
-                        waitTime += traveller.doArena(
+                        val arenaWaitTime = traveller.doArena(
                             shouldAutoEquip = state.value.shouldAutoEquipItem,
                             shouldSkipNPCs = state.value.shouldSkipNpc
                         )
+                        val shouldSkipNPCs = arenaWaitTime == -1L
+                        waitTime += if(shouldSkipNPCs) (800L..1500L).random() else arenaWaitTime
+
 
                         onStatusChange(
                             status = TravellingStatus.UpgradeSkill(
@@ -484,16 +488,14 @@ class TravellerForegroundService : LifecycleService(), OnTravellerStateChange {
     }
 
     private fun getAutoTravelActivityPendingIntent(): PendingIntent {
-        val intent = Intent(this, AutoTravelActivity::class.java).apply {
-            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-        }
+        val intent = Intent(this, AutoTravelActivity::class.java)
 
-        return PendingIntent.getActivity(
-            this,
-            TRAVELLING_NOTIFICATION_REQUEST_CODE,
-            intent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        )
+        return TaskStackBuilder.create(this).run {
+            addNextIntentWithParentStack(intent)
+
+            getPendingIntent(TRAVELLING_NOTIFICATION_REQUEST_CODE,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
+        }
     }
 
     @RequiresApi(Build.VERSION_CODES.O)
