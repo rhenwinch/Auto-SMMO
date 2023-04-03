@@ -20,7 +20,7 @@ data class StepResult(
     val text: String,
     val travel_background: String,
     val userAmount: String,
-    val wait_length: Long = 0
+    val wait_length: Double = 0.0
 )
 
 data class SteppingModifier(

@@ -104,11 +104,11 @@ class TravellerImpl @Inject constructor(
 
         if(isUserNotVerified(travelText = travelText)) {
             verify()
-            return stepResult.wait_length
+            return stepResult.wait_length.toLong()
         }
 
         if(shouldWaitMore(travelText = travelText)) {
-            return stepResult.wait_length
+            return stepResult.wait_length.toLong()
         }
 
         if(isUserOnAJob(travelText = travelText)) {
@@ -234,7 +234,7 @@ class TravellerImpl @Inject constructor(
         if(shouldHumanizeStepping)
             waitTime += (1000L..3000L).random()
 
-        return waitTime
+        return waitTime.toLong()
     }
 
     override suspend fun doQuest(): Long {
