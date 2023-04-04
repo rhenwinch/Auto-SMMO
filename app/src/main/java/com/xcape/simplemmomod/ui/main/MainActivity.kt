@@ -52,6 +52,7 @@ import com.xcape.simplemmomod.domain.model.User
 import com.xcape.simplemmomod.ui.account_picker.AccountPickerActivity
 import com.xcape.simplemmomod.ui.account_picker.USER_DATA
 import com.xcape.simplemmomod.ui.autotravelui.AutoTravelActivity
+import com.xcape.simplemmomod.ui.common.ExitBackPressHandler
 import com.xcape.simplemmomod.ui.common.MenuItem
 import com.xcape.simplemmomod.ui.theme.SimpleMMOModTheme
 import com.xcape.simplemmomod.ui.webview.WebViewActivity.Companion.openSeparateActivity
@@ -185,6 +186,8 @@ fun MainApp(
         MenuItem.Register { onWebStateChange(REGISTER_URL) },
         MenuItem.AccountPicker(onAccountPickerClick)
     )
+
+    ExitBackPressHandler()
 
     SimpleMMOModTheme {
         Surface(
