@@ -5,6 +5,8 @@ import com.xcape.simplemmomod.common.Endpoints.ATTACK_NPC_URL
 import com.xcape.simplemmomod.common.Endpoints.BASE_URL
 import com.xcape.simplemmomod.common.Endpoints.BATTLE_URL
 import com.xcape.simplemmomod.common.Endpoints.GENERATE_NPC_URL
+import com.xcape.simplemmomod.common.Endpoints.TRAVEL_URL
+import com.xcape.simplemmomod.common.Endpoints.WEB_HOST
 import com.xcape.simplemmomod.common.Functions.getStringInBetween
 import com.xcape.simplemmomod.common.Functions.toJson
 import com.xcape.simplemmomod.common.Parser.parseItemLoot
@@ -78,6 +80,7 @@ class NpcActionsImpl @Inject constructor(
         isUserTravelling: Boolean,
     ): Long {
         var user = userRepository.getLoggedInUser()!!
+        var npcUrl = npcId
         val attackNpcUrl = if(isUserTravelling) {
             String.format(ATTACK_NPC_URL,
                 getStringInBetween(
@@ -87,8 +90,30 @@ class NpcActionsImpl @Inject constructor(
                 )
             )
         } else {
+            npcUrl = String.format("$BASE_URL/npcs/attack/%s?new_page=true", npcId)
             String.format(ATTACK_NPC_URL, npcId)
         }
+
+        val getHeaders = Headers.Builder()
+            .add("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8")
+            .add("Host", WEB_HOST)
+            .add("Referer", if(isUserTravelling) TRAVEL_URL else "$BASE_URL/battle/arena")
+            .add("x-requested-with", PACKAGE_NAME)
+            .add("Connection", "keep-alive")
+            .add("Sec-Fetch-Dest", "document")
+            .add("Sec-Fetch-Mode", "navigate")
+            .add("Sec-Fetch-Site", "same-origin")
+            .add("Sec-Fetch-User", "?1")
+            .add("User-Agent", user.userAgent)
+            .build()
+
+        val (initCookie, _) = autoSMMORequest.get(
+            url = npcUrl,
+            headers = getHeaders
+        )
+
+        user = user.copy(cookie = initCookie)
+        userRepository.updateUser(user = user)
 
         if(npc != null) {
             user = autoSMMOLogger.log(

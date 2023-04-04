@@ -40,7 +40,7 @@ object Endpoints {
     const val SUPPORT_URL = "$BASE_URL/support"
     const val TASKS_URL = "$BASE_URL/tasks/daily"
 
-    const val STEP_URL = "$API_BASE_URL/api/travel/perform/f4gl4l3k"
+    const val STEP_URL = "$API_BASE_URL/api/action/travel/4"
     const val GENERATE_NPC_URL = "$API_BASE_URL/api/battlearena/generate"
     const val ATTACK_NPC_URL = "$API_BASE_URL/api/npcs/attack/%s/434g3s"
     const val GATHER_MATERIAL_URL = "$BASE_URL/api/crafting/material/gather/%s"

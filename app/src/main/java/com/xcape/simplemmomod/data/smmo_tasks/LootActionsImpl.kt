@@ -32,7 +32,7 @@ class LootActionsImpl @Inject constructor(
     private val userRepository: UserRepository
 ) : LootActions {
     override suspend fun obtainMaterials(materialId: String): Long {
-        val user = userRepository.getLoggedInUser()!!
+        var user = userRepository.getLoggedInUser()!!
 
         var isDoneGathering = false
         val gatherMaterialUrl = String.format(
@@ -44,9 +44,29 @@ class LootActionsImpl @Inject constructor(
             )
         )
 
+        val getHeaders = Headers.Builder()
+            .add("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8")
+            .add("Host", WEB_HOST)
+            .add("Referer", TRAVEL_URL)
+            .add("x-requested-with", PACKAGE_NAME)
+            .add("Connection", "keep-alive")
+            .add("Sec-Fetch-Dest", "document")
+            .add("Sec-Fetch-Mode", "navigate")
+            .add("Sec-Fetch-Site", "same-origin")
+            .add("Sec-Fetch-User", "?1")
+            .add("User-Agent", user.userAgent)
+            .build()
+
+        val (initCookie, _) = autoSMMORequest.get(
+            url = materialId,
+            headers = getHeaders
+        )
+
+        user = user.copy(cookie = initCookie)
+        userRepository.updateUser(user = user)
+
         var dailyMaterialsFound = user.dailyMaterialsFound
         var totalMaterialsFound = user.totalMaterialsFound
-        var newUser = user
         while (!isDoneGathering) {
             try {
                 val humanizedHeaders = Headers.Builder()
@@ -82,17 +102,17 @@ class LootActionsImpl @Inject constructor(
                     "> Gathering! Rewards: $expGained EXP | $craftingExpGained Crafting EXP"
                 }
 
-                newUser = autoSMMOLogger.log(
+                user = autoSMMOLogger.log(
                     message = toLog,
-                    user = newUser
+                    user = user
                 )
 
-                newUser = newUser.copy(
+                user = user.copy(
                     cookie = newCookie,
                     dailyMaterialsFound = ++dailyMaterialsFound,
                     totalMaterialsFound = ++totalMaterialsFound
                 )
-                userRepository.updateUser(user = newUser)
+                userRepository.updateUser(user = user)
 
                 delay((1000L..2500L).random())
             }
