@@ -28,7 +28,6 @@ import com.xcape.simplemmomod.common.Endpoints.DIAMONDS_STORE_URL
 import com.xcape.simplemmomod.common.Endpoints.DISCUSSION_BOARD_URL
 import com.xcape.simplemmomod.common.Endpoints.EARN_URL
 import com.xcape.simplemmomod.common.Endpoints.EVENTS_URL
-import com.xcape.simplemmomod.common.Endpoints.FRIENDS_URL
 import com.xcape.simplemmomod.common.Endpoints.GUILDS_URL
 import com.xcape.simplemmomod.common.Endpoints.HOME_URL
 import com.xcape.simplemmomod.common.Endpoints.INVENTORY_URL
@@ -46,6 +45,7 @@ import com.xcape.simplemmomod.common.Endpoints.SUPPORT_URL
 import com.xcape.simplemmomod.common.Endpoints.TASKS_URL
 import com.xcape.simplemmomod.common.Endpoints.TOWN_URL
 import com.xcape.simplemmomod.common.Endpoints.TRAVEL_URL
+import com.xcape.simplemmomod.common.JavascriptFunctions.SHOW_FRIENDS
 import com.xcape.simplemmomod.common.JavascriptFunctions.SHOW_PLAYER_INFO
 import com.xcape.simplemmomod.domain.model.AppPreferences
 import com.xcape.simplemmomod.domain.model.User
@@ -145,7 +145,7 @@ fun MainApp(
         MenuItem.Quest { onWebStateChange(QUEST_URL) },
         MenuItem.Travel { onWebStateChange(TRAVEL_URL) },
         MenuItem.Battle { onWebStateChange(BATTLE_URL) },
-        MenuItem.Profile { onWebStateChange(SHOW_PLAYER_INFO) }
+        MenuItem.Profile { webViewNavigator.loadUrl(SHOW_PLAYER_INFO) }
     )
 
     val drawerHeaderMenuItems = mapOf(
@@ -228,7 +228,7 @@ fun MainApp(
                                 webViewNavigator.reload()
                             },
                             onFriendsMenuClick = {
-                                onWebStateChange(FRIENDS_URL)
+                                webViewNavigator.loadUrl(SHOW_FRIENDS)
                             }
                         )
                     },
