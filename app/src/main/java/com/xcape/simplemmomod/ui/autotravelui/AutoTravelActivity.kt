@@ -311,12 +311,55 @@ fun AutoTravelUi(
                 ) },
             )
 
+            Button(
+                onClick = {
+                    scope.launch {
+                        serviceIntent.also {
+                            it.action = ACTION_CLEAN_TRAVEL_LOGS
+                            context.startTravellerService(it)
+                        }
+
+                        snackbarHostState.showSnackbar(
+                            message = "Logs cleaned!",
+                            withDismissAction = true,
+                            duration = SnackbarDuration.Short
+                        )
+                    }
+                },
+                modifier = Modifier.padding(top = 17.dp)
+            ) {
+                Column(
+                    verticalArrangement = Arrangement.Center,
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(
+                        text = "Clean Logs",
+                        style = TextStyle(
+                            fontSize = 15.sp,
+                            fontWeight = FontWeight.Normal,
+                            textAlign = TextAlign.Center
+                        ),
+                        modifier = Modifier.padding(horizontal = 5.dp)
+                    )
+
+                    Text(
+                        text = "(click if lagging)",
+                        style = TextStyle(
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Light,
+                            textAlign = TextAlign.Center
+                        ),
+                        modifier = Modifier.padding(top = 2.dp)
+                    )
+                }
+            }
+
             Divider(
                 thickness = 2.dp,
                 modifier = Modifier.padding(
                     start = 25.dp,
                     end = 25.dp,
-                    top = 35.dp
+                    top = 17.dp
                 )
             )
 

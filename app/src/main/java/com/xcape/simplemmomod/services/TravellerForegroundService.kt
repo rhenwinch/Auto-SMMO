@@ -55,6 +55,7 @@ const val ACTION_PLAY_TRAVELLING = "play_travelling"
 const val ACTION_PAUSE_TRAVELLING = "pause_travelling"
 const val ACTION_START_TRAVELLING = "start_travelling"
 const val ACTION_CONSUME_ERROR_TRAVELLING = "consume_error"
+const val ACTION_CLEAN_TRAVEL_LOGS = "clean_travel_logs"
 const val ACTION_TICK_CHANGE_UPGRADE_TRAVELLING = "tick_change_upgrade"
 const val ACTION_TICK_AUTO_EQUIP_TRAVELLING = "tick_auto_equip"
 const val ACTION_TICK_IGNORE_NPC_TRAVELLING = "tick_ignore_npc"
@@ -138,7 +139,7 @@ class TravellerForegroundService : LifecycleService(), OnTravellerStateChange {
 
                     resetTravellerState()
                     bindTravellingStatusToNotificationTitle()
-                    bindUserToService()
+                    bindUserVerification()
                     startTravellerService()
                 }
             }
@@ -159,6 +160,7 @@ class TravellerForegroundService : LifecycleService(), OnTravellerStateChange {
                 pause()
             }
             ACTION_CONSUME_ERROR_TRAVELLING -> onConsumeError()
+            ACTION_CLEAN_TRAVEL_LOGS -> clearTravelLogs()
             ACTION_TICK_CHANGE_UPGRADE_TRAVELLING -> {
                 val skillType = intent!!.getStringExtra(SKILL_TYPE)!!.toSkillType()
                 state.update { it.copy(skillToUpgrade = skillType) }
@@ -301,6 +303,14 @@ class TravellerForegroundService : LifecycleService(), OnTravellerStateChange {
         travellingJob?.start()
     }
 
+    private fun clearTravelLogs() {
+        lifecycleScope.launch {
+            userRepository.getLoggedInUser()?.let {
+                userRepository.updateUser(user = it.copy(travelLog = ""))
+            }
+        }
+    }
+
     private fun bindTravellingStatusToNotificationTitle() {
         lifecycleScope.launch {
             state.collectLatest {
@@ -314,48 +324,24 @@ class TravellerForegroundService : LifecycleService(), OnTravellerStateChange {
         }
     }
 
-    private fun bindUserToService() {
+    private fun bindUserVerification() {
         val needsVerification = user.map {
             it?.needsVerification ?: false
         }.distinctUntilChanged()
 
-        val travelLogCleaner = user.map {
-            val lines = it?.travelLog?.lines()?.size
-            val cleanLogsOnLinesCount = 400
-
-            if(lines != null && lines >= cleanLogsOnLinesCount) {
-                it
-            } else null
-        }.distinctUntilChanged()
-
         lifecycleScope.launch {
-            // Verify flow
-            launch {
-                needsVerification.collect { verify ->
-                    val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE)
-                            as NotificationManager
+            needsVerification.collect { verify ->
+                val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE)
+                        as NotificationManager
 
-                    if (verify) {
-                        onStatusChange(TravellingStatus.Verify)
+                if (verify) {
+                    onStatusChange(TravellingStatus.Verify)
 
-                        val notificationBuilder = createVerificationNotification()
+                    val notificationBuilder = createVerificationNotification()
 
-                        notificationManager.notify(VERIFICATION_NOTIFICATION_ID, notificationBuilder.build())
-                    } else {
-                        notificationManager.cancel(VERIFICATION_NOTIFICATION_ID)
-                    }
-                }
-            }
-
-            // Travel log flow
-            launch {
-                travelLogCleaner.collect { userCleaner ->
-                    val shouldClean = userCleaner != null && state.value.header == TravellingStatus.Idle
-                    if(shouldClean) {
-                        userRepository.updateUser(
-                            user = userCleaner!!.copy(travelLog = "[SERVICE]> Freed up travel logs!")
-                        )
-                    }
+                    notificationManager.notify(VERIFICATION_NOTIFICATION_ID, notificationBuilder.build())
+                } else {
+                    notificationManager.cancel(VERIFICATION_NOTIFICATION_ID)
                 }
             }
         }
