@@ -85,47 +85,50 @@ class MainViewModel @Inject constructor(
         ignoreTokenUpdate: Boolean = false
     ): User? {
         return try {
-            user.value?.let { user ->
-                var userToken = user.apiToken
-                if(!ignoreTokenUpdate || userToken.isEmpty()) {
-                    userToken = userApiService.getUserToken(cookie = cookie)
-                }
+            var userToken = user.value?.apiToken
+            if(!ignoreTokenUpdate || userToken == null || userToken.isEmpty()) {
+                userToken = userApiService.getUserToken(cookie = cookie)
+            }
 
-                var userCsrfToken = user.csrfToken
-                if(userCsrfToken.isEmpty()) {
-                    userCsrfToken = userApiService.getCsrfToken(
-                        cookie = cookie,
-                        apiToken = userToken,
-                        userAgent = user.userAgent
-                    )
-                }
-
-                val updatedUser = userApiService.getUser(
+            var userCsrfToken = user.value?.csrfToken
+            if(userCsrfToken == null || userCsrfToken.isEmpty()) {
+                userCsrfToken = userApiService.getCsrfToken(
                     cookie = cookie,
                     apiToken = userToken,
                     userAgent = appState.value.userAgent
                 )
-
-                user.copy(
-                    characterUpgrades = updatedUser.characterUpgrades,
-                    notifications = updatedUser.notifications,
-                    messages = updatedUser.messages,
-                    userAgent = appState.value.userAgent,
-                    cookie = cookie,
-                    apiToken = userToken,
-                    csrfToken = userCsrfToken,
-                    username = updatedUser.username,
-                    id = updatedUser.id,
-                    gold = updatedUser.gold,
-                    level = updatedUser.level,
-                    avatar = updatedUser.avatar,
-                    totalSteps = updatedUser.totalSteps,
-                    maxBattleEnergy = updatedUser.maxBattleEnergy,
-                    maxQuestEnergy = updatedUser.maxQuestEnergy,
-                    battleEnergy = updatedUser.battleEnergy,
-                    questEnergy = updatedUser.questEnergy,
-                )
             }
+
+            val updatedUser = userApiService.getUser(
+                cookie = cookie,
+                apiToken = userToken,
+                userAgent = appState.value.userAgent
+            )
+
+            var toReturn = user.value
+            if(toReturn == null) {
+                toReturn = User()
+            }
+
+            toReturn.copy(
+                characterUpgrades = updatedUser.characterUpgrades,
+                notifications = updatedUser.notifications,
+                messages = updatedUser.messages,
+                userAgent = appState.value.userAgent,
+                cookie = cookie,
+                apiToken = userToken,
+                csrfToken = userCsrfToken,
+                username = updatedUser.username,
+                id = updatedUser.id,
+                gold = updatedUser.gold,
+                level = updatedUser.level,
+                avatar = updatedUser.avatar,
+                totalSteps = updatedUser.totalSteps,
+                maxBattleEnergy = updatedUser.maxBattleEnergy,
+                maxQuestEnergy = updatedUser.maxQuestEnergy,
+                battleEnergy = updatedUser.battleEnergy,
+                questEnergy = updatedUser.questEnergy,
+            )
         }
         catch (e: Exception) {
             e.printStackTrace()
