@@ -248,7 +248,7 @@ fun MainApp(
                                 loggedInUserAgent = userAgent,
                                 webViewState = webViewState,
                                 webViewNavigator = webViewNavigator,
-                                activityKiller = {},
+                                activityKiller = { _, _ -> },
                                 onWebViewLoading = { newProgress ->
                                     progress = newProgress
                                 },

@@ -8,6 +8,7 @@ import android.os.Bundle
 import android.util.Log
 import android.webkit.*
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -23,6 +24,8 @@ import com.google.accompanist.web.*
 import com.xcape.simplemmomod.common.Constants.APP_TAG
 import com.xcape.simplemmomod.common.Endpoints.BASE_URL
 import com.xcape.simplemmomod.common.Endpoints.BOT_VERIFICATION_URL
+import com.xcape.simplemmomod.common.JavascriptFunctions.CHECK_IF_ALREADY_VERIFIED
+import com.xcape.simplemmomod.data.smmo_tasks.BOT_RESPONSE
 import com.xcape.simplemmomod.domain.model.User
 import com.xcape.simplemmomod.ui.common.TabbedMenuItem
 import com.xcape.simplemmomod.ui.common.TabbedMenuItem.Companion.toTabbedMenuItem
@@ -83,12 +86,32 @@ class WebViewActivity : ComponentActivity() {
             val webViewState = rememberWebViewState(url = url, additionalHttpHeaders = emptyMap())
             val webViewNavigator = rememberWebViewNavigator()
 
-            val activityKiller = { isVerified: Boolean ->
+            fun activityKiller(
+                isVerified: Boolean,
+                isForced: Boolean = false
+            ) {
+                if(isForced) {
+                    this.finish()
+                    return
+                }
+
                 if(isVerified) {
                     viewModel.onEvent(WebViewUiEvent.UserVerified)
                 }
 
+                if(originalUrl.contains(BOT_RESPONSE) && !isVerified) {
+                    webViewNavigator.loadUrl(CHECK_IF_ALREADY_VERIFIED)
+                    return
+                }
+
                 this.finish()
+            }
+
+            BackHandler {
+                if(originalUrl.contains(BOT_RESPONSE)) {
+                    webViewNavigator.loadUrl(CHECK_IF_ALREADY_VERIFIED)
+                    return@BackHandler
+                }
             }
 
             var toolbarTitle by remember { mutableStateOf("") }
@@ -127,7 +150,9 @@ class WebViewActivity : ComponentActivity() {
                             loggedInUserAgent = user!!.userAgent,
                             webViewState = webViewState,
                             webViewNavigator = webViewNavigator,
-                            activityKiller = { activityKiller(it) },
+                            activityKiller = { isVerified, isForced ->
+                                activityKiller(isVerified, isForced)
+                            },
                             onTitleChange = {
                                 toolbarTitle = it
                             },
@@ -156,7 +181,7 @@ fun WebViewContent(
     loggedInUserAgent: String,
     webViewState: WebViewState,
     webViewNavigator: WebViewNavigator,
-    activityKiller: (isVerified: Boolean) -> Unit,
+    activityKiller: (isVerified: Boolean, isForced: Boolean) -> Unit,
     onTitleChange: (String) -> Unit = { },
     onWebViewLoading: (Float) -> Unit,
     onCookieChange: (String?) -> Unit,
@@ -229,7 +254,7 @@ fun WebViewContent(
                 addJavascriptInterface(object {
                     @JavascriptInterface
                     fun close() {
-                        activityKiller(webViewState.lastLoadedUrl == BOT_VERIFICATION_URL)
+                        activityKiller(webViewState.lastLoadedUrl == BOT_VERIFICATION_URL, false)
                     }
                 }, "ok")
 
@@ -245,6 +270,7 @@ fun WebViewContent(
                     }
                 }, "app")
 
+                @Suppress("SpellCheckingInspection")
                 addJavascriptInterface(object {
                     @JavascriptInterface
                     fun showAd() {
@@ -255,6 +281,18 @@ fun WebViewContent(
                         }
                     }
                 }, "oktwo")
+
+                addJavascriptInterface(object {
+                    @JavascriptInterface
+                    fun check(content: String) {
+                        if(content.contains("You have passed")) {
+                            activityKiller(true, false)
+                            return
+                        }
+
+                        activityKiller(false, true)
+                    }
+                }, "verificationCheck")
             }
         },
         client = webClient,

@@ -341,6 +341,9 @@ class TravellerForegroundService : LifecycleService(), OnTravellerStateChange {
 
                     notificationManager.notify(VERIFICATION_NOTIFICATION_ID, notificationBuilder.build())
                 } else {
+                    if(!state.value.isTravelling)
+                        onStatusChange(TravellingStatus.NotStarted)
+
                     notificationManager.cancel(VERIFICATION_NOTIFICATION_ID)
                 }
             }
@@ -369,7 +372,7 @@ class TravellerForegroundService : LifecycleService(), OnTravellerStateChange {
             getNotificationsButtonPendingActivity(NotificationButtons.Verify.name)
 
         return NotificationCompat.Builder(this@TravellerForegroundService, VERIFICATION_NOTIFICATION_CHANNEL_ID)
-            .setAutoCancel(false)
+            .setAutoCancel(true)
             .setOngoing(true)
             .setSmallIcon(R.drawable.ic_travel)
             .setContentTitle("Verify!")

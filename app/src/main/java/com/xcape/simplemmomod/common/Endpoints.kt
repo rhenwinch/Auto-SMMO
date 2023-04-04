@@ -1,7 +1,6 @@
 package com.xcape.simplemmomod.common
 
-import com.xcape.simplemmomod.common.Functions.getStringInBetween
-
+@Suppress("SpellCheckingInspection")
 object Endpoints {
     const val BASE_URL = "https://simple-mmo.com"
     private const val API_BASE_URL = "https://api.simple-mmo.com"
@@ -13,9 +12,9 @@ object Endpoints {
     const val LOGIN_URL = "$BASE_URL/login"
     const val LOGOUT_URL = "$BASE_URL/logout"
 
-    const val USER_EVENTS_URL = "$API_BASE_URL/api/main";
-    const val USER_INFO_URL = "$API_BASE_URL/api/popup";
-    const val API_TOKEN_URL = "$BASE_URL/api/token";
+    const val USER_EVENTS_URL = "$API_BASE_URL/api/main"
+    const val USER_INFO_URL = "$API_BASE_URL/api/popup"
+    const val API_TOKEN_URL = "$BASE_URL/api/token"
 
     const val HOME_URL = "$BASE_URL/home"
     const val BATTLE_URL = "$BASE_URL/battle/menu"
@@ -29,7 +28,6 @@ object Endpoints {
     const val ABOUT_URL = "$BASE_URL/about"
     const val EVENTS_URL = "$BASE_URL/events/viewall"
     const val CHARACTER_URL = "$BASE_URL/character"
-    const val FRIENDS_URL = "$BASE_URL/friends"
     const val COLLECTION_URL = "$BASE_URL/collection/menu"
     const val CRAFTING_URL = "$BASE_URL/crafting/menu"
     const val DISCUSSION_BOARD_URL = "$BASE_URL/discussionboards/menu"
