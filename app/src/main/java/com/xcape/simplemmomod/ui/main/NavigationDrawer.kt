@@ -8,7 +8,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -38,7 +38,7 @@ import com.xcape.simplemmomod.ui.theme.SimpleMMOModTheme
 @Composable
 fun NavigationDrawer(
     isUserLoggedIn: Boolean,
-    user: User,
+    user: User?,
     headerMenuItems: Map<String, MenuItem>,
     bodyMenuItems: Map<String, List<MenuItem>>,
     selectedItem: String,
@@ -218,15 +218,15 @@ fun DrawerHeader(
 @Composable
 fun DrawerBody(
     isUserLoggedIn: Boolean,
-    user: User,
+    user: User?,
     headerMenuItems: Map<String, MenuItem>,
     menuItems: Map<String, List<MenuItem>>,
     selectedItem: String,
     onViewChange: (String) -> Unit,
 ) {
-    val itemsToUse = if(isUserLoggedIn) "loggedIn" else "loggedOut"
+    val itemsToUse = if(isUserLoggedIn && user != null) "loggedIn" else "loggedOut"
 
-    if(isUserLoggedIn && user.id != 0) {
+    if(isUserLoggedIn && user?.id != 0 && user != null) {
         DrawerHeader(
             user = user,
             menuItems = headerMenuItems,
@@ -240,7 +240,7 @@ fun DrawerBody(
     }
 
     LazyColumn {
-        itemsIndexed(menuItems[itemsToUse]!!) { i, item ->
+        items(menuItems[itemsToUse]!!) { item ->
             val isSelected = selectedItem == item.route
             val iconColor: Color by animateColorAsState(
                 if (isSelected)

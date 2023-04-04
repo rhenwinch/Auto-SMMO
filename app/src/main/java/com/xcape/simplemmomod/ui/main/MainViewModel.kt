@@ -28,13 +28,18 @@ class MainViewModel @Inject constructor(
 
     private val isLoggingInState = MutableStateFlow(false)
 
-    private val _user = MutableStateFlow(User())
-    val user: StateFlow<User> = _user.asStateFlow()
+    val user = userRepository
+        .getFlowLoggedInUser()
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.Lazily,
+            initialValue = null
+        )
 
     init {
         viewModelScope.launch {
             launch {
-                dataStore.data.collect {
+                appState.collect {
                     isLoggingInState.first { !isLoggingInState.value }
                     if(it.userAgent.isEmpty()) {
                         val userAgent = UserAgentGenerator.generate()
@@ -44,7 +49,6 @@ class MainViewModel @Inject constructor(
             }
 
             launch {
-                _user.update { userRepository.getLoggedInUser() ?: it }
                 fetchUser()
             }
         }
@@ -81,53 +85,58 @@ class MainViewModel @Inject constructor(
         ignoreTokenUpdate: Boolean = false
     ): User? {
         return try {
-            var userToken = _user.value.apiToken
-            if(!ignoreTokenUpdate || userToken.isEmpty()) {
-                userToken = userApiService.getUserToken(cookie = cookie)
-            }
+            user.value?.let { user ->
+                var userToken = user.apiToken
+                if(!ignoreTokenUpdate || userToken.isEmpty()) {
+                    userToken = userApiService.getUserToken(cookie = cookie)
+                }
 
-            var userCsrfToken = _user.value.csrfToken
-            if(userCsrfToken.isEmpty()) {
-                userCsrfToken = userApiService.getCsrfToken(
+                var userCsrfToken = user.csrfToken
+                if(userCsrfToken.isEmpty()) {
+                    userCsrfToken = userApiService.getCsrfToken(
+                        cookie = cookie,
+                        apiToken = userToken,
+                        userAgent = user.userAgent
+                    )
+                }
+
+                val updatedUser = userApiService.getUser(
                     cookie = cookie,
                     apiToken = userToken,
-                    userAgent = _user.value.userAgent
+                    userAgent = appState.value.userAgent
+                )
+
+                user.copy(
+                    characterUpgrades = updatedUser.characterUpgrades,
+                    notifications = updatedUser.notifications,
+                    messages = updatedUser.messages,
+                    userAgent = appState.value.userAgent,
+                    cookie = cookie,
+                    apiToken = userToken,
+                    csrfToken = userCsrfToken,
+                    username = updatedUser.username,
+                    id = updatedUser.id,
+                    gold = updatedUser.gold,
+                    level = updatedUser.level,
+                    avatar = updatedUser.avatar,
+                    totalSteps = updatedUser.totalSteps,
+                    maxBattleEnergy = updatedUser.maxBattleEnergy,
+                    maxQuestEnergy = updatedUser.maxQuestEnergy,
+                    battleEnergy = updatedUser.battleEnergy,
+                    questEnergy = updatedUser.questEnergy,
                 )
             }
-
-            val user = userApiService.getUser(
-                cookie = cookie,
-                apiToken = userToken,
-                userAgent = appState.value.userAgent
-            )
-
-            _user.value.copy(
-                characterUpgrades = user.characterUpgrades,
-                notifications = user.notifications,
-                messages = user.messages,
-                userAgent = appState.value.userAgent,
-                cookie = cookie,
-                apiToken = userToken,
-                csrfToken = userCsrfToken,
-                username = user.username,
-                id = user.id,
-                gold = user.gold,
-                level = user.level,
-                avatar = user.avatar,
-                totalSteps = user.totalSteps,
-                maxBattleEnergy = user.maxBattleEnergy,
-                maxQuestEnergy = user.maxQuestEnergy,
-                battleEnergy = user.battleEnergy,
-                questEnergy = user.questEnergy,
-            )
-        } catch (e: Exception) {
+        }
+        catch (e: Exception) {
             e.printStackTrace()
             null
         }
     }
 
     private suspend fun setCookie(cookie: String) {
-        userRepository.updateUser(user = _user.value.copy(cookie = cookie))
+        user.value?.copy(cookie = cookie)?.let {
+            userRepository.updateUser(user = it)
+        }
     }
 
     fun login(cookie: String) {
@@ -144,16 +153,12 @@ class MainViewModel @Inject constructor(
                     val newLoggedInUser = cachedUser.copy(loggedIn = true)
                     userRepository.updateUser(user = newLoggedInUser)
 
-                    _user.update { newLoggedInUser }
-
                     updatePreferences(
                         userId = newLoggedInUser.id,
                         userAgent = newLoggedInUser.userAgent
                     )
                     isLoggingInState.update { false }
                 } else {
-                    _user.update { user!! }
-
                     updatePreferences(
                         userId = user!!.id,
                         userAgent = appState.value.userAgent
@@ -168,8 +173,9 @@ class MainViewModel @Inject constructor(
     }
 
     private suspend fun logout() {
-        userRepository.updateUser(user = _user.value.copy(loggedIn = false))
-        _user.update { User() }
+        user.value?.let { 
+            userRepository.updateUser(user = it.copy(loggedIn = false))
+        }
         updatePreferences(userAgent = appState.value.userAgent)
     }
 
@@ -189,10 +195,7 @@ class MainViewModel @Inject constructor(
                 )!!
 
                 newUser = newUser.copy(loggedIn = appState.value.userIdToUse == newUser.id)
-                _user.update { newUser }
                 userRepository.updateUser(newUser)
-            } else {
-                _user.update { _ -> it }
             }
         }
     }
