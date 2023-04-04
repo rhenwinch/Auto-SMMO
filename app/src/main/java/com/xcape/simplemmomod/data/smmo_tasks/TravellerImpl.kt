@@ -353,14 +353,6 @@ class TravellerImpl @Inject constructor(
                 return (800L..1500L).random()
             }
 
-            val userWithHealth = userApiServiceRepository.getUser(
-                cookie = user.cookie,
-                apiToken = user.apiToken,
-                userAgent = user.userAgent
-            )
-            user = userRepository.getLoggedInUser()!!.copy(currentHealthPercentage = userWithHealth.currentHealthPercentage)
-            userRepository.updateUser(user = user)
-
             val shouldRetreat = npcActions.attackNpc(
                 npcId = npc.id.toString(),
                 npc = npc,

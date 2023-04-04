@@ -17,6 +17,7 @@ import com.xcape.simplemmomod.data.dto.toBattleResult
 import com.xcape.simplemmomod.data.dto.toNpc
 import com.xcape.simplemmomod.data.remote.AutoSMMORequest
 import com.xcape.simplemmomod.domain.model.Npc
+import com.xcape.simplemmomod.domain.repository.UserApiServiceRepository
 import com.xcape.simplemmomod.domain.repository.UserRepository
 import com.xcape.simplemmomod.domain.smmo_tasks.AutoSMMOLogger
 import com.xcape.simplemmomod.domain.smmo_tasks.LootActions
@@ -33,6 +34,7 @@ class CannotAttackNpc(override val message: String = "Unknown error attacking np
 class NpcActionsImpl @Inject constructor(
     private val autoSMMORequest: AutoSMMORequest,
     private val userRepository: UserRepository,
+    private val userApiServiceRepository: UserApiServiceRepository,
     private val lootActions: LootActions,
     private val autoSMMOLogger: AutoSMMOLogger
 ) : NpcActions {
@@ -89,10 +91,19 @@ class NpcActionsImpl @Inject constructor(
                     delimiter2 = "?"
                 )
             )
-        } else {
+        }
+        else {
             npcUrl = String.format("$BASE_URL/npcs/attack/%s?new_page=true", npcId)
             String.format(ATTACK_NPC_URL, npcId)
         }
+
+        val userWithHealth = userApiServiceRepository.getUser(
+            cookie = user.cookie,
+            apiToken = user.apiToken,
+            userAgent = user.userAgent
+        )
+        user = userRepository.getLoggedInUser()!!.copy(currentHealthPercentage = userWithHealth.currentHealthPercentage)
+        userRepository.updateUser(user = user)
 
         val getHeaders = Headers.Builder()
             .add("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8")

@@ -138,11 +138,13 @@ class AppModule {
     fun provideArenaActions(
         userRepository: UserRepository,
         autoSMMORequest: AutoSMMORequest,
+        userApiServiceRepository: UserApiServiceRepository,
         lootActions: LootActions,
         autoSMMOLogger: AutoSMMOLogger,
     ): NpcActions = NpcActionsImpl(
         userRepository = userRepository,
         autoSMMORequest = autoSMMORequest,
+        userApiServiceRepository = userApiServiceRepository,
         autoSMMOLogger = autoSMMOLogger,
         lootActions = lootActions
     )
