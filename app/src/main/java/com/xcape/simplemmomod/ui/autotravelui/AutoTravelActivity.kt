@@ -5,6 +5,7 @@ import android.content.Intent
 import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
@@ -128,22 +129,26 @@ fun AutoTravelUi(
             activityKiller()
     }
 
+    val onExit = {
+        if(screenState.isTravelling) {
+            context.showToast("Pause the script to leave!")
+        }
+        else {
+            serviceIntent.also {
+                it.action = ACTION_STOP_TRAVELLING
+                context.startTravellerService(it)
+            }
+            activityKiller()
+        }
+    }
+
+    BackHandler(onBack = onExit)
+
     Scaffold(
         topBar = {
             AutoTravelTopAppBar(
                 isUserTravelling = screenState.isTravelling,
-                onNavigationIconClick = {
-                    if(screenState.isTravelling) {
-                        context.showToast("Pause the script to leave!")
-                    }
-                    else {
-                        serviceIntent.also {
-                            it.action = ACTION_STOP_TRAVELLING
-                            context.startTravellerService(it)
-                        }
-                        activityKiller()
-                    }
-                },
+                onNavigationIconClick = onExit,
                 onClickPlay = { isPausing ->
                     scope.launch {
                         if(!isPausing) {
