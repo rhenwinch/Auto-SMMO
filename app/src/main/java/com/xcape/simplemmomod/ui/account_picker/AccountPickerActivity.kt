@@ -28,7 +28,6 @@ import androidx.compose.ui.unit.sp
 import androidx.constraintlayout.compose.ConstraintLayout
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
-import com.xcape.simplemmomod.common.Endpoints
 import com.xcape.simplemmomod.domain.model.User
 import com.xcape.simplemmomod.ui.common.BasicTopAppBar
 import com.xcape.simplemmomod.ui.common.IconResource
@@ -98,7 +97,7 @@ fun LoadAccount(user: User, onAccountClick: (String?) -> Unit) {
                 val (image, userInfo, userProgress, playButton) = createRefs()
 
                 AsyncImage(
-                    model = Endpoints.BASE_URL + user.avatar,
+                    model = user.avatar,
                     contentDescription = user.username,
                     placeholder = IconResource.fromImageVector(Icons.Default.Person).asPainterResource(),
                     modifier = Modifier
