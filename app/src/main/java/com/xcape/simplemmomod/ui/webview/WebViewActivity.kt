@@ -112,6 +112,8 @@ class WebViewActivity : ComponentActivity() {
                     webViewNavigator.loadUrl(CHECK_IF_ALREADY_VERIFIED)
                     return@BackHandler
                 }
+
+                this.finish()
             }
 
             var toolbarTitle by remember { mutableStateOf("") }
