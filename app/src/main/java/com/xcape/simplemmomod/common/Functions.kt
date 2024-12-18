@@ -1,6 +1,8 @@
 package com.xcape.simplemmomod.common
 
+import android.util.Log
 import com.google.gson.Gson
+import com.xcape.simplemmomod.common.Constants.APP_TAG
 import java.util.*
 
 object Functions {
@@ -15,7 +17,12 @@ object Functions {
         delimiter1: String,
         delimiter2: String
     ): String {
-        return string.split(delimiter1)[1].split(delimiter2)[0]
+        return try {
+            string.split(delimiter1)[1].split(delimiter2)[0]
+        } catch (e: Exception) {
+            Log.e(APP_TAG, string)
+            throw e
+        }
     }
 
     fun removeHtmlTags(rawHtml: String): String {
