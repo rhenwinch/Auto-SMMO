@@ -257,7 +257,7 @@ class TravellerForegroundService : LifecycleService(), OnTravellerStateChange {
                                 skillType = state.value.skillToUpgrade
                             )
                         )
-                        traveller.upgradeSkill()
+                        traveller.upgradeSkill(state.value.skillToUpgrade)
 
                         onStatusChange(TravellingStatus.Questing)
                         waitTime += traveller.doQuest()
@@ -276,7 +276,7 @@ class TravellerForegroundService : LifecycleService(), OnTravellerStateChange {
                                 skillType = state.value.skillToUpgrade
                             )
                         )
-                        traveller.upgradeSkill()
+                        traveller.upgradeSkill(state.value.skillToUpgrade)
                         traveller.resetEnergyTimer()
                     }
                     else {
