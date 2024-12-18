@@ -10,5 +10,5 @@ interface UserRepository {
     fun getFlowLoggedInUser(): Flow<User?>
     suspend fun addUser(user: User)
     suspend fun updateUser(user: User)
-    fun delete(userId: Int)
+    suspend fun delete(userId: Int)
 }

@@ -13,7 +13,8 @@ import javax.inject.Inject
 
 @HiltViewModel
 class AutoTravelViewModel @Inject constructor(
-    private val userRepository: UserRepository
+    private val userRepository: UserRepository,
+    io: CoroutineDispatcher
 ) : ViewModel() {
     val state = TravellerForegroundService.exposedState
 
@@ -22,7 +23,7 @@ class AutoTravelViewModel @Inject constructor(
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.Lazily,
-            initialValue = User()
+            initialValue = runBlocking(io) { userRepository.getLoggedInUser() }
         )
 
     fun resetUserDailies() {

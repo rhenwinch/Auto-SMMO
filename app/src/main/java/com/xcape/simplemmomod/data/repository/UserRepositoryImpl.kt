@@ -3,22 +3,31 @@ package com.xcape.simplemmomod.data.repository
 import com.xcape.simplemmomod.data.local.UserDao
 import com.xcape.simplemmomod.domain.model.User
 import com.xcape.simplemmomod.domain.repository.UserRepository
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 class UserRepositoryImpl @Inject constructor(
-    private val userDao: UserDao
+    private val userDao: UserDao,
+    private val io: CoroutineDispatcher
 ) : UserRepository {
     override suspend fun getAll(): List<User> {
-        return userDao.getAll()
+        return withContext(io) {
+            userDao.getAll()
+        }
     }
 
     override suspend fun getUserById(id: Int): User? {
-        return userDao.findByUserId(id = id)
+        return withContext(io) {
+            userDao.findByUserId(id = id)
+        }
     }
 
     override suspend fun getLoggedInUser(): User? {
-        return userDao.findByLoggedIn()
+        return withContext(io) {
+            userDao.findByLoggedIn()
+        }
     }
 
     override fun getFlowLoggedInUser(): Flow<User?> {
@@ -29,14 +38,20 @@ class UserRepositoryImpl @Inject constructor(
         if(user.id == 0)
             return
 
-        userDao.addUser(user = user)
+        withContext(io) {
+            userDao.addUser(user = user)
+        }
     }
 
     override suspend fun updateUser(user: User) {
-        userDao.updateUser(user = user)
+        withContext(io) {
+            userDao.updateUser(user = user)
+        }
     }
 
-    override fun delete(userId: Int) {
-        userDao.deleteByUserId(userId)
+    override suspend fun delete(userId: Int) {
+        withContext(io) {
+            userDao.deleteByUserId(userId)
+        }
     }
 }

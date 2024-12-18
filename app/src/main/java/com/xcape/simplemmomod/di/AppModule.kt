@@ -65,8 +65,10 @@ class AppModule {
     @Provides
     fun provideUserRepository(
         userDatabase: UserDatabase,
+        io: CoroutineDispatcher
     ): UserRepository = UserRepositoryImpl(
-        userDao = userDatabase.userDao()
+        userDao = userDatabase.userDao(),
+        io = io
     )
 
     @Singleton

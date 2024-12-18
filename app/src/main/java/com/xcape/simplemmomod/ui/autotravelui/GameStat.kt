@@ -4,28 +4,28 @@ sealed class GameStat(
     val name: String,
     val count: Int
 ) {
-    data class Steps(val _count: Int): GameStat(
+    class Steps(count: Int): GameStat(
         name = "Steps",
-        count = _count
+        count = count
     )
 
-    data class Quests(val _count: Int): GameStat(
+    class Quests(count: Int): GameStat(
         name = "Quests",
-        count = _count
+        count = count
     )
 
-    data class Battles(val _count: Int): GameStat(
+    class Battles(count: Int): GameStat(
         name = "Battles",
-        count = _count
+        count = count
     )
 
-    data class ItemsFound(val _count: Int): GameStat(
+    class ItemsFound(count: Int): GameStat(
         name = "Items",
-        count = _count
+        count = count
     )
 
-    data class MaterialsFound(val _count: Int): GameStat(
+    class MaterialsFound(count: Int): GameStat(
         name = "Materials",
-        count = _count
+        count = count
     )
 }

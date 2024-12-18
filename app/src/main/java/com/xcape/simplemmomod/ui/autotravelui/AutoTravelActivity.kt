@@ -8,7 +8,11 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.*
+import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -44,6 +48,7 @@ import com.xcape.simplemmomod.ui.common.showToast
 import com.xcape.simplemmomod.ui.theme.SimpleMMOModTheme
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
+import java.util.Locale
 
 @AndroidEntryPoint
 class AutoTravelActivity: ComponentActivity() {
@@ -118,7 +123,7 @@ fun AutoTravelUi(
     }
 
     val screenState by viewModel.state.collectAsState(initial = AutoTravelUiState())
-    val user by viewModel.user.collectAsState(initial = User())
+    val user by viewModel.user.collectAsState()
 
     val snackbarHostState = remember { SnackbarHostState() }
 
@@ -132,8 +137,7 @@ fun AutoTravelUi(
     val onExit = {
         if(screenState.isTravelling) {
             context.showToast("Pause the script to leave!")
-        }
-        else {
+        } else {
             serviceIntent.also {
                 it.action = ACTION_STOP_TRAVELLING
                 context.startTravellerService(it)
@@ -212,8 +216,12 @@ fun AutoTravelUi(
                 modifier = Modifier.padding(bottom = 15.dp, top = 68.dp)
             )
 
+            val header = remember(screenState.header) {
+                screenState.header.toString()
+            }
+
             Text(
-                text = screenState.header.toString(),
+                text = header,
                 fontSize = 30.sp,
                 style = TextStyle(
                     fontWeight = FontWeight.Bold,
@@ -290,31 +298,42 @@ fun AutoTravelUi(
                 modifier = Modifier.padding(top = 22.dp, bottom = 22.dp)
             )
 
-            TextField(
-                value = TextFieldValue(
-                    text = user?.travelLog ?: "",
-                    selection = TextRange(user?.travelLog?.length ?: 0)
-                ),
-                onValueChange = {  },
+            val listState = rememberLazyListState()
+            val logs by remember {
+                derivedStateOf { 
+                    user?.travelLog
+                        ?.split("\n") 
+                        ?: emptyList()
+                }
+            }
+
+            LaunchedEffect(logs) {
+                listState.scrollToItem(logs.size)
+            }
+
+            LazyColumn(
+                state = listState,
+                contentPadding = PaddingValues(8.dp),
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(start = 25.dp, end = 25.dp)
-                    .height(140.dp),
-                textStyle = TextStyle(
-                    fontFamily = FontFamily.Monospace,
-                    fontSize = 11.sp,
-                    fontWeight = FontWeight.Thin
-                ),
-                readOnly = true,
-                placeholder = { Text(
-                    text = "Your travel logs are stored here.",
-                    style = TextStyle(
-                        fontFamily = FontFamily.Monospace,
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.Thin
+                    .height(140.dp)
+                    .background(
+                        color = MaterialTheme.colorScheme.surfaceColorAtElevation(1.dp),
+                        shape = MaterialTheme.shapes.small
+                    ),
+            ) {
+                items(logs) {
+                    Text(
+                        text = it,
+                        style = MaterialTheme.typography.bodySmall.copy(
+                            fontFamily = FontFamily.Monospace,
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Thin
+                        )
                     )
-                ) },
-            )
+                }
+            }
 
             Button(
                 onClick = {
@@ -376,9 +395,13 @@ fun AutoTravelUi(
                     .padding(top = 38.dp)
                     .size(68.dp)
             )
+            
+            val username = remember {
+                String.format(Locale.getDefault(), "%s #%d", user?.username, user?.id)
+            }
 
             Text(
-                text = String.format("%s #%d", user?.username, user?.id),
+                text = username,
                 style = TextStyle(
                     fontSize = 15.sp,
                     fontWeight = FontWeight.Normal,
@@ -401,9 +424,13 @@ fun AutoTravelUi(
                         textAlign = TextAlign.Center
                     )
                 )
+                
+                val level = remember(user?.level) {
+                    String.format(Locale.getDefault(), "%,d", user?.level)
+                }
 
                 Text(
-                    text = String.format("%,d", user?.level),
+                    text = level,
                     style = TextStyle(
                         fontSize = 15.sp,
                         fontWeight = FontWeight.Medium,
@@ -418,9 +445,13 @@ fun AutoTravelUi(
                     tint = Color.Unspecified,
                     modifier = Modifier.size(20.dp)
                 )
-
+                
+                val gold = remember(user?.gold) {
+                    String.format(Locale.getDefault(), "%,d", user?.gold)
+                }
+                
                 Text(
-                    text = String.format("%,d", user?.gold),
+                    text = gold,
                     style = TextStyle(
                         fontSize = 15.sp,
                         fontWeight = FontWeight.Medium,
@@ -432,24 +463,28 @@ fun AutoTravelUi(
 
             StatsComponent(
                 headline = "Daily Stats:",
-                statsList = listOf(
-                    GameStat.Steps(user!!.dailySteps),
-                    GameStat.Quests(user!!.dailyQuests),
-                    GameStat.Battles(user!!.dailyBattles),
-                    GameStat.ItemsFound(user!!.dailyItemsFound),
-                    GameStat.MaterialsFound(user!!.dailyMaterialsFound)
-                )
+                statsList = {
+                    listOf(
+                        GameStat.Steps(user!!.dailySteps),
+                        GameStat.Quests(user!!.dailyQuests),
+                        GameStat.Battles(user!!.dailyBattles),
+                        GameStat.ItemsFound(user!!.dailyItemsFound),
+                        GameStat.MaterialsFound(user!!.dailyMaterialsFound)
+                    )
+                }
             )
 
             StatsComponent(
                 headline = "Total Stats:",
-                statsList = listOf(
-                    GameStat.Steps(user!!.totalSteps),
-                    GameStat.Quests(user!!.totalQuests),
-                    GameStat.Battles(user!!.totalBattles),
-                    GameStat.ItemsFound(user!!.totalItemsFound),
-                    GameStat.MaterialsFound(user!!.totalMaterialsFound)
-                )
+                statsList = {
+                    listOf(
+                        GameStat.Steps(user!!.totalSteps),
+                        GameStat.Quests(user!!.totalQuests),
+                        GameStat.Battles(user!!.totalBattles),
+                        GameStat.ItemsFound(user!!.totalItemsFound),
+                        GameStat.MaterialsFound(user!!.totalMaterialsFound)
+                    )
+                }
             )
         }
     }
@@ -499,7 +534,7 @@ fun SkillTypeRadioButtons(
 @Composable
 fun StatsComponent(
     headline: String,
-    statsList: List<GameStat>
+    statsList: () -> List<GameStat>
 ) {
     Text(
         text = headline,
@@ -516,7 +551,7 @@ fun StatsComponent(
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-fun StatsCardItem(statsList: List<GameStat>) {
+fun StatsCardItem(statsList: () -> List<GameStat>) {
     FlowRow(
         horizontalArrangement = Arrangement.spacedBy(
             space = 15.dp,
@@ -528,7 +563,7 @@ fun StatsCardItem(statsList: List<GameStat>) {
             .wrapContentWidth(Alignment.CenterHorizontally)
             .wrapContentHeight(Alignment.CenterVertically)
     ) {
-        statsList.forEach { stat ->
+        statsList().forEach { stat ->
             Card(
                 shape = RoundedCornerShape(5.dp),
                 elevation = CardDefaults.cardElevation(10.dp),
@@ -548,9 +583,13 @@ fun StatsCardItem(statsList: List<GameStat>) {
                     ),
                     modifier = Modifier.padding(start = 10.dp, top = 4.dp)
                 )
+                
+                val count = remember(stat.count) {
+                    String.format(Locale.getDefault(), "%,d", stat.count)
+                }
 
                 Text(
-                    text = String.format("%,d", stat.count),
+                    text = count,
                     style = TextStyle(
                         fontSize = 30.sp,
                         fontWeight = FontWeight.Bold,
