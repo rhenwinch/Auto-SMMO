@@ -5,12 +5,11 @@ import com.xcape.simplemmomod.common.Endpoints.HOME_URL
 import com.xcape.simplemmomod.common.Endpoints.USER_INFO_URL
 import com.xcape.simplemmomod.common.Endpoints.USER_EVENTS_URL
 import com.xcape.simplemmomod.data.dto.UserEventsDto
+import com.xcape.simplemmomod.data.dto.UserInfoBody
 import com.xcape.simplemmomod.data.dto.UserInfoDto
 import com.xcape.simplemmomod.data.dto.UserTokenDto
 import com.xcape.simplemmomod.data.smmo_tasks.PACKAGE_NAME
 import retrofit2.http.*
-
-data class UserInfoBody(val api_token: String)
 
 interface UserApiService {
     @POST

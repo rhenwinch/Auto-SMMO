@@ -10,7 +10,7 @@ import com.xcape.simplemmomod.data.dto.toUser
 import com.xcape.simplemmomod.data.remote.AutoSMMORequest
 import com.xcape.simplemmomod.data.remote.JSON_BODY_TYPE
 import com.xcape.simplemmomod.data.remote.UserApiService
-import com.xcape.simplemmomod.data.remote.UserInfoBody
+import com.xcape.simplemmomod.data.dto.UserInfoBody
 import com.xcape.simplemmomod.domain.model.User
 import com.xcape.simplemmomod.domain.repository.UserApiServiceRepository
 import okhttp3.Headers

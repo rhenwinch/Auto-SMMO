@@ -20,6 +20,13 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.AutoSMMO"
         tools:targetApi="31">
+
+        <provider
+            android:name="androidx.startup.InitializationProvider"
+            android:authorities="${applicationId}.androidx-startup"
+            tools:node="remove">
+        </provider>
+
         <service
             android:name=".services.TravellerForegroundService"
             android:exported="false" />
