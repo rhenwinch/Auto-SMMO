@@ -10,20 +10,24 @@ import com.xcape.simplemmomod.domain.repository.UserApiServiceRepository
 import com.xcape.simplemmomod.domain.repository.UserRepository
 import com.xcape.simplemmomod.ui.common.UserAgentGenerator
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import javax.inject.Inject
 
 @HiltViewModel
 class MainViewModel @Inject constructor(
     private val userRepository: UserRepository,
     private val userApiService: UserApiServiceRepository,
-    private val dataStore: DataStore<AppPreferences>
+    private val dataStore: DataStore<AppPreferences>,
+    private val io: CoroutineDispatcher,
 ) : ViewModel() {
     val appState = dataStore.data.stateIn(
         scope = viewModelScope,
         started = SharingStarted.Lazily,
-        initialValue = AppPreferences()
+        initialValue = runBlocking(io) { dataStore.data.first() }
     )
 
     private val isLoggingInState = MutableStateFlow(false)
@@ -33,7 +37,7 @@ class MainViewModel @Inject constructor(
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.Lazily,
-            initialValue = null
+            initialValue = runBlocking(io) { userRepository.getLoggedInUser() }
         )
 
     init {
@@ -91,7 +95,7 @@ class MainViewModel @Inject constructor(
             }
 
             var userCsrfToken = user.value?.csrfToken
-            if(userCsrfToken == null || userCsrfToken.isEmpty()) {
+            if(userCsrfToken.isNullOrEmpty()) {
                 userCsrfToken = userApiService.getCsrfToken(
                     cookie = cookie,
                     apiToken = userToken,

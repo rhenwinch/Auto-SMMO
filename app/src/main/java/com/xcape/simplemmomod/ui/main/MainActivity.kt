@@ -83,7 +83,9 @@ fun MainApp(
     val userAgent = appState.userAgent
     val isUserLoggedIn = appState.userIdToUse != 0
 
-    var url by remember { mutableStateOf(if(isUserLoggedIn) HOME_URL else LOGIN_URL) }
+    var url by rememberSaveable(isUserLoggedIn) {
+        mutableStateOf(if(isUserLoggedIn) HOME_URL else LOGIN_URL)
+    }
     var selectedMenuItem by rememberSaveable {
         mutableStateOf(if(isUserLoggedIn) "Home" else "Login")
     }
@@ -199,7 +201,10 @@ fun MainApp(
                 drawerContent = {
                     NavigationDrawer(
                         isUserLoggedIn = isUserLoggedIn,
-                        user = user,
+                        userProvider = {
+                            user ?:
+                                throw NullPointerException("No logged in user was found")
+                        },
                         headerMenuItems = drawerHeaderMenuItems,
                         bodyMenuItems = mapOf(
                             "loggedIn" to drawerBodyLoggedInMenuItems,
@@ -220,7 +225,7 @@ fun MainApp(
                     topBar = {
                         MainTopAppBar(
                             isUserLoggedIn = isUserLoggedIn,
-                            progress = animatedProgress,
+                            progress = { animatedProgress },
                             onNavigationDrawerClick = {
                                 scope.launch {
                                     drawerState.open()

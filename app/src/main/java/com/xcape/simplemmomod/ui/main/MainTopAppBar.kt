@@ -20,7 +20,7 @@ import com.xcape.simplemmomod.ui.common.IconResource
 @Composable
 fun MainTopAppBar(
     isUserLoggedIn: Boolean,
-    progress: Float,
+    progress: () -> Float,
     onNavigationDrawerClick: () -> Unit,
     onWebViewReload: () -> Unit,
     onFriendsMenuClick: () -> Unit
@@ -62,8 +62,8 @@ fun MainTopAppBar(
             }
         )
 
-        AnimatedVisibility(visible = progress < 1F) {
-            LinearProgressIndicator(progress = progress, modifier = Modifier.fillMaxWidth())
+        AnimatedVisibility(visible = progress() < 1F) {
+            LinearProgressIndicator(progress = progress(), modifier = Modifier.fillMaxWidth())
         }
     }
 }

@@ -38,7 +38,7 @@ import com.xcape.simplemmomod.ui.theme.SimpleMMOModTheme
 @Composable
 fun NavigationDrawer(
     isUserLoggedIn: Boolean,
-    user: User?,
+    userProvider: () -> User,
     headerMenuItems: Map<String, MenuItem>,
     bodyMenuItems: Map<String, List<MenuItem>>,
     selectedItem: String,
@@ -50,8 +50,8 @@ fun NavigationDrawer(
         modifier = Modifier.width(300.dp)
     ) {
         DrawerBody(
+            userProvider = userProvider,
             isUserLoggedIn = isUserLoggedIn,
-            user = user,
             headerMenuItems = headerMenuItems,
             menuItems = bodyMenuItems,
             selectedItem = selectedItem,
@@ -63,7 +63,7 @@ fun NavigationDrawer(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DrawerHeader(
-    user: User,
+    userProvider: () -> User,
     menuItems: Map<String, MenuItem>,
     onViewChange: (String) -> Unit,
 ) {
@@ -78,8 +78,8 @@ fun DrawerHeader(
             val (image, column, messagesButton, notificationsButton) = createRefs()
 
             AsyncImage(
-                model = user.avatar,
-                contentDescription = user.username,
+                model = userProvider().avatar,
+                contentDescription = userProvider().username,
                 placeholder = IconResource.fromImageVector(Icons.Default.Person).asPainterResource(),
                 modifier = Modifier
                     .padding(15.dp)
@@ -106,12 +106,12 @@ fun DrawerHeader(
                     }
             ) {
                 BadgedBox(badge = {
-                    if(user.characterUpgrades > 0) {
-                        Badge { Text(text = user.characterUpgrades.toString()) }
+                    if(userProvider().characterUpgrades > 0) {
+                        Badge { Text(text = userProvider().characterUpgrades.toString()) }
                     }
                 }) {
                     Text(
-                        text = user.username,
+                        text = userProvider().username,
                         textAlign = TextAlign.Start,
                         fontSize = 13.sp,
                         fontWeight = FontWeight.Normal,
@@ -123,7 +123,7 @@ fun DrawerHeader(
                 }
 
                 Text(
-                    text = "#${user.id}",
+                    text = "#${userProvider().id}",
                     textAlign = TextAlign.Left,
                     fontSize = 13.sp,
                     fontWeight = FontWeight.Thin,
@@ -153,12 +153,12 @@ fun DrawerHeader(
                 )
 
                 AnimatedVisibility(
-                    visible = user.messages > 0,
+                    visible = userProvider().messages > 0,
                     enter = scaleIn(),
                     exit = scaleOut()
                 ) {
                     Text(
-                        text = user.messages.toString(),
+                        text = userProvider().messages.toString(),
                         color = MaterialTheme.colorScheme.onSecondary,
                         fontSize = 11.sp,
                         modifier = Modifier
@@ -193,12 +193,12 @@ fun DrawerHeader(
                 )
 
                 AnimatedVisibility(
-                    visible = user.notifications > 0,
+                    visible = userProvider().notifications > 0,
                     enter = scaleIn(),
                     exit = scaleOut()
                 ) {
                     Text(
-                        text = user.notifications.toString(),
+                        text = userProvider().notifications.toString(),
                         color = MaterialTheme.colorScheme.onSecondary,
                         fontSize = 11.sp,
                         modifier = Modifier
@@ -218,17 +218,17 @@ fun DrawerHeader(
 @Composable
 fun DrawerBody(
     isUserLoggedIn: Boolean,
-    user: User?,
+    userProvider: () -> User,
     headerMenuItems: Map<String, MenuItem>,
     menuItems: Map<String, List<MenuItem>>,
     selectedItem: String,
     onViewChange: (String) -> Unit,
 ) {
-    val itemsToUse = if(isUserLoggedIn && user != null) "loggedIn" else "loggedOut"
+    val itemsToUse = if(isUserLoggedIn) "loggedIn" else "loggedOut"
 
-    if(isUserLoggedIn && user?.id != 0 && user != null) {
+    if(isUserLoggedIn && userProvider().id != 0) {
         DrawerHeader(
-            user = user,
+            userProvider = userProvider,
             menuItems = headerMenuItems,
             onViewChange = onViewChange
         )
@@ -290,7 +290,11 @@ fun AppPreview() {
                 "notifications" to MenuItem.Notifications {  },
                 "character" to MenuItem.Character {  }
             )
-            DrawerHeader(user = User().copy(username = "eeateat asi", id = 0), menuItems = drawerHeaderMenuItems, onViewChange = {})
+            DrawerHeader(
+                userProvider = { User().copy(username = "eeateat asi", id = 0) },
+                menuItems = drawerHeaderMenuItems,
+                onViewChange = {}
+            )
         }
     }
 }
