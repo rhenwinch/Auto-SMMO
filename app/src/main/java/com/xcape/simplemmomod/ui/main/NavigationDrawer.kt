@@ -1,6 +1,7 @@
 package com.xcape.simplemmomod.ui.main
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
@@ -60,7 +61,7 @@ fun NavigationDrawer(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalAnimationApi::class)
 @Composable
 fun DrawerHeader(
     userProvider: () -> User,
