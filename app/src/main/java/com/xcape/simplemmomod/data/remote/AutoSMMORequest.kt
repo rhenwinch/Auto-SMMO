@@ -38,8 +38,8 @@ class AutoSMMORequest @Inject constructor(
             val newCookies = response.headers.values("Set-Cookie")
 
             AutoSMMOResponse(
-                newCookies.joinToString("; ") { it.split(";")[0] },
-                response.body.byteStream().bufferedReader().use { it.readText() }
+                first = newCookies.joinToString("; ") { it.split(";")[0] },
+                second = response.body.string()
             )
         }
     }
@@ -70,8 +70,8 @@ class AutoSMMORequest @Inject constructor(
             )
 
             AutoSMMOResponse(
-                newCookies.joinToString("; ") { it.split(";")[0] },
-                response.body.byteStream().bufferedReader().use { it.readText() }
+                first = newCookies.joinToString("; ") { it.split(";")[0] },
+                second = response.body.string()
             )
         }
     }
