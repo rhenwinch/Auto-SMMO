@@ -4,11 +4,17 @@ import com.google.gson.Gson
 import java.util.*
 
 object Functions {
+    val gson = Gson()
+
     inline fun <reified T : Any> String.toJson(jsonObject: Class<T>): T {
-        return Gson().fromJson(this, jsonObject)
+        return gson.fromJson(this, jsonObject)
     }
 
-    fun getStringInBetween(string: String, delimiter1: String, delimiter2: String): String {
+    fun getStringInBetween(
+        string: String,
+        delimiter1: String,
+        delimiter2: String
+    ): String {
         return string.split(delimiter1)[1].split(delimiter2)[0]
     }
 

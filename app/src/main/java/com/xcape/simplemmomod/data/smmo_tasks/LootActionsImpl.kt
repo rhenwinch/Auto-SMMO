@@ -2,7 +2,6 @@ package com.xcape.simplemmomod.data.smmo_tasks
 
 import android.util.Base64
 import com.xcape.simplemmomod.common.Endpoints.BASE_URL
-import com.xcape.simplemmomod.common.Endpoints.GATHER_MATERIAL_URL
 import com.xcape.simplemmomod.common.Endpoints.ITEM_EQUIP_URL
 import com.xcape.simplemmomod.common.Endpoints.ITEM_STAT_URL
 import com.xcape.simplemmomod.common.Endpoints.TRAVEL_URL
@@ -31,18 +30,10 @@ class LootActionsImpl @Inject constructor(
     private val autoSMMOLogger: AutoSMMOLogger,
     private val userRepository: UserRepository
 ) : LootActions {
-    override suspend fun obtainMaterials(materialId: String): Long {
+    override suspend fun obtainMaterials(materialUrl: String): Long {
         var user = userRepository.getLoggedInUser()!!
 
         var isDoneGathering = false
-        val gatherMaterialUrl = String.format(
-            GATHER_MATERIAL_URL,
-            getStringInBetween(
-                string = materialId,
-                delimiter1 = "/gather/",
-                delimiter2 = "?"
-            )
-        )
 
         val getHeaders = Headers.Builder()
             .add("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8")
@@ -57,10 +48,23 @@ class LootActionsImpl @Inject constructor(
             .add("User-Agent", user.userAgent)
             .build()
 
-        val (initCookie, _) = autoSMMORequest.get(
-            url = materialId,
+        val (initCookie, gatheringPage) = autoSMMORequest.get(
+            url = materialUrl,
             headers = getHeaders
         )
+
+        val materialId = getStringInBetween(
+            string = materialUrl,
+            delimiter1 = "/gather/",
+            delimiter2 = "?"
+        )
+        val gatherMaterialUrl
+            = getStringInBetween(
+                gatheringPage,
+                "\"gathering.gather_endpoint\":\"",
+                "\""
+            ).replace("\\u0026", "&")
+            .replace("\\", "")
 
         user = user.copy(cookie = initCookie)
         userRepository.updateUser(user = user)
@@ -74,6 +78,7 @@ class LootActionsImpl @Inject constructor(
                     .add("Host", WEB_HOST)
                     .add("Origin", BASE_URL)
                     .add("Referer", materialId)
+                    .add("Authorization", "Bearer ${user.apiToken}")
                     .add("Connection", "keep-alive")
                     .add("Sec-Fetch-Dest", "empty")
                     .add("Sec-Fetch-Mode", "cors")
@@ -82,7 +87,8 @@ class LootActionsImpl @Inject constructor(
                     .build()
 
 
-                val humanizedData = ("{\"_token\": \"${user.csrfToken}\"}").toRequestBody(JSON_BODY_TYPE)
+                val humanizedData = ("{\"quantity\":1,\"id\":$materialId}")
+                    .toRequestBody(JSON_BODY_TYPE)
 
                 val (newCookie, responseString) = autoSMMORequest.post(
                     url = gatherMaterialUrl,

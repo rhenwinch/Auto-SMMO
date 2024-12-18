@@ -1,16 +1,13 @@
 package com.xcape.simplemmomod.data.dto
 
+import com.google.gson.annotations.SerializedName
 import com.xcape.simplemmomod.domain.model.GatherResult
 
 data class GatherResultDto(
-    val craftingExpGained: Int,
-    val expRemaining: Int,
-    val gatherEnd: Boolean,
-    val newLevel: Int,
-    val newPercent: Int,
-    val playerExpGained: Int,
-    val result: String,
-    val type: String
+    val type: String,
+    @SerializedName("skill_experience_gained") val craftingExpGained: Int,
+    @SerializedName("is_end") val gatherEnd: Boolean,
+    @SerializedName("player_experience_gained") val playerExpGained: Int,
 )
 
 fun GatherResultDto.toGatherResult(): GatherResult {

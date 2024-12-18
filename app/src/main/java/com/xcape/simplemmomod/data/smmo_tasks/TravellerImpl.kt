@@ -155,7 +155,7 @@ class TravellerImpl @Inject constructor(
         var waitTime = stepResult.wait_length
         when(stepType) {
             StepType.MATERIAL -> {
-                val (materialLevelAndRarity, materialId) = parseMaterialLoot(toParse = travelText)
+                val (materialLevelAndRarity, materialUrl) = parseMaterialLoot(toParse = travelText)
 
                 autoSMMOLogger.log(
                     message = "[STEP #${user.dailySteps}] You've found (Material): $travelHeadline [$materialLevelAndRarity]",
@@ -164,7 +164,7 @@ class TravellerImpl @Inject constructor(
 
                 val canBeGathered = !travelText.contains("Your skill level isn't high enough")
                 if(canBeGathered) {
-                    waitTime += lootActions.obtainMaterials(materialId = materialId)
+                    waitTime += lootActions.obtainMaterials(materialUrl = materialUrl)
                 }
             }
             StepType.TEXT -> {

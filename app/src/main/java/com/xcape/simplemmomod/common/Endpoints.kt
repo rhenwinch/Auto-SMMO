@@ -43,7 +43,6 @@ object Endpoints {
     const val STEP_URL = "$API_BASE_URL/api/action/travel/4"
     const val GENERATE_NPC_URL = "$API_BASE_URL/api/battlearena/generate"
     const val ATTACK_NPC_URL = "$API_BASE_URL/api/npcs/attack/%s/434g3s"
-    const val GATHER_MATERIAL_URL = "$BASE_URL/api/crafting/material/gather/%s"
     const val ITEM_STAT_URL = "$BASE_URL/api/item/stats/%s"
     const val ITEM_EQUIP_URL = "$BASE_URL/inventory/equip/%s?api=true"
     const val QUEST_ACTION_URL = "$BASE_URL/api/quest/%s/gj83h"
